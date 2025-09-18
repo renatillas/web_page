@@ -2294,24 +2294,24 @@ var Property = class extends CustomType {
   }
 };
 var Event2 = class extends CustomType {
-  constructor(kind, name2, handler2, include, prevent_default3, stop_propagation3, immediate, debounce, throttle) {
+  constructor(kind, name2, handler2, include, prevent_default3, stop_propagation2, immediate, debounce, throttle) {
     super();
     this.kind = kind;
     this.name = name2;
     this.handler = handler2;
     this.include = include;
     this.prevent_default = prevent_default3;
-    this.stop_propagation = stop_propagation3;
+    this.stop_propagation = stop_propagation2;
     this.immediate = immediate;
     this.debounce = debounce;
     this.throttle = throttle;
   }
 };
 var Handler = class extends CustomType {
-  constructor(prevent_default3, stop_propagation3, message) {
+  constructor(prevent_default3, stop_propagation2, message) {
     super();
     this.prevent_default = prevent_default3;
-    this.stop_propagation = stop_propagation3;
+    this.stop_propagation = stop_propagation2;
     this.message = message;
   }
 };
@@ -2467,14 +2467,14 @@ function property(name2, value) {
   return new Property(property_kind, name2, value);
 }
 var event_kind = 2;
-function event(name2, handler2, include, prevent_default3, stop_propagation3, immediate, debounce, throttle) {
+function event(name2, handler2, include, prevent_default3, stop_propagation2, immediate, debounce, throttle) {
   return new Event2(
     event_kind,
     name2,
     handler2,
     include,
     prevent_default3,
-    stop_propagation3,
+    stop_propagation2,
     immediate,
     debounce,
     throttle
@@ -2496,6 +2496,9 @@ function property2(name2, value) {
 }
 function class$(name2) {
   return attribute2("class", name2);
+}
+function data(key, value) {
+  return attribute2("data-" + key, value);
 }
 function id(value) {
   return attribute2("id", value);
@@ -6316,8 +6319,8 @@ function root3(attributes, children2) {
 function emit2(event4, data2) {
   return event2(event4, data2);
 }
-function handler(message, prevent_default3, stop_propagation3) {
-  return new Handler(prevent_default3, stop_propagation3, message);
+function handler(message, prevent_default3, stop_propagation2) {
+  return new Handler(prevent_default3, stop_propagation2, message);
 }
 function is_immediate_event(name2) {
   if (name2 === "input") {
@@ -6380,26 +6383,6 @@ function prevent_default(event4) {
   } else {
     return event4;
   }
-}
-function stop_propagation(event4) {
-  if (event4 instanceof Event2) {
-    return new Event2(
-      event4.kind,
-      event4.name,
-      event4.handler,
-      event4.include,
-      event4.prevent_default,
-      always,
-      event4.immediate,
-      event4.debounce,
-      event4.throttle
-    );
-  } else {
-    return event4;
-  }
-}
-function on_click(msg) {
-  return on("click", success(msg));
 }
 
 // build/dev/javascript/clique/clique/edge.mjs
@@ -6767,7 +6750,7 @@ var add_event_listener = (shadow_root, name2, handler2) => {
 var prevent_default2 = (event4, yes) => {
   if (yes) event4.preventDefault();
 };
-var stop_propagation2 = (event4, yes) => {
+var stop_propagation = (event4, yes) => {
   if (yes) event4.stopPropagation();
 };
 
@@ -6783,7 +6766,7 @@ function add_event_listener2(name2, decoder3) {
           if ($ instanceof Ok) {
             let handler2 = $[0];
             let $1 = prevent_default2(event4, handler2.prevent_default);
-            let $2 = stop_propagation2(event4, handler2.stop_propagation);
+            let $2 = stop_propagation(event4, handler2.stop_propagation);
             return dispatch(handler2.message);
           } else {
             return void 0;
@@ -7037,6 +7020,9 @@ function position(x, y) {
     "position",
     preprocessed_array(toList([float3(x), float3(y)]))
   );
+}
+function nodrag() {
+  return data("clique-disable", "drag");
 }
 function on_change(handler2) {
   return on(
@@ -9456,8 +9442,8 @@ function view_container(children2) {
                   let _pipe$1 = split2(_pipe, " ");
                   let _pipe$2 = map(_pipe$1, trim);
                   _block = contains(_pipe$2, "drag");
-                  let nodrag = _block;
-                  if (nodrag) {
+                  let nodrag2 = _block;
+                  if (nodrag2) {
                     return failure2;
                   } else {
                     return success2;
@@ -9677,15 +9663,30 @@ function on_zoom2(handler2) {
 
 // build/dev/javascript/renatillas/renatillas.ffi.mjs
 function initializeTouchSupport() {
-  function handleMouseDown(e) {
-    const isButton = e.target.tagName === "BUTTON" || e.target.tagName === "A" || e.target.hasAttribute("data-window-button") || e.target.closest("button") || e.target.closest("a");
-    if (isButton) {
-      e.stopImmediatePropagation();
-      return true;
+  function handleButtonClicks(e) {
+    if (e.target.tagName === "CLIQUE-NODE") {
+      const buttons = e.target.querySelectorAll("button, a");
+      const nodeRect = e.target.getBoundingClientRect();
+      const mouseX = e.clientX - nodeRect.left;
+      const mouseY = e.clientY - nodeRect.top;
+      for (const button2 of buttons) {
+        const buttonRect = button2.getBoundingClientRect();
+        const buttonX = buttonRect.left - nodeRect.left;
+        const buttonY = buttonRect.top - nodeRect.top;
+        if (mouseX >= buttonX && mouseX <= buttonX + buttonRect.width && mouseY >= buttonY && mouseY <= buttonY + buttonRect.height) {
+          e.stopPropagation();
+          e.preventDefault();
+          button2.click();
+          return;
+        }
+      }
     }
-    return false;
+    if (e.target.tagName === "BUTTON" || e.target.tagName === "A") {
+      e.stopPropagation();
+    }
   }
-  document.addEventListener("mousedown", handleMouseDown, { capture: true });
+  document.addEventListener("mousedown", handleButtonClicks, { capture: true });
+  document.addEventListener("touchstart", handleButtonClicks, { capture: true, passive: false });
   let isDragging = false;
   let dragTarget = null;
   let canvasPanning = false;
@@ -9806,7 +9807,7 @@ function initializeTouchSupport() {
 
 // build/dev/javascript/renatillas/renatillas/window.mjs
 var WindowConfig = class extends CustomType {
-  constructor(id2, title2, icon, position2, z_index, on_drag2, content, width, button_message) {
+  constructor(id2, title2, icon, position2, z_index, on_drag2, content, width) {
     super();
     this.id = id2;
     this.title = title2;
@@ -9816,10 +9817,9 @@ var WindowConfig = class extends CustomType {
     this.on_drag = on_drag2;
     this.content = content;
     this.width = width;
-    this.button_message = button_message;
   }
 };
-function create_window_controls(button_message) {
+function create_window_controls() {
   return div(
     toList([class$("flex gap-1")]),
     toList([
@@ -9828,8 +9828,7 @@ function create_window_controls(button_message) {
           class$(
             "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
           ),
-          attribute2("data-window-button", "true"),
-          stop_propagation(on_click(button_message))
+          nodrag()
         ]),
         toList([text3("_")])
       ),
@@ -9838,8 +9837,7 @@ function create_window_controls(button_message) {
           class$(
             "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
           ),
-          attribute2("data-window-button", "true"),
-          stop_propagation(on_click(button_message))
+          nodrag()
         ]),
         toList([text3("\u25A1")])
       ),
@@ -9848,8 +9846,7 @@ function create_window_controls(button_message) {
           class$(
             "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
           ),
-          attribute2("data-window-button", "true"),
-          stop_propagation(on_click(button_message))
+          nodrag()
         ]),
         toList([text3("\xD7")])
       )
@@ -9906,7 +9903,7 @@ function create_window(config) {
                   )
                 ])
               ),
-              create_window_controls(config.button_message)
+              create_window_controls()
             ])
           ),
           config.content
@@ -10002,8 +9999,6 @@ var ViewportPanned = class extends CustomType {
     super();
     this[0] = $0;
   }
-};
-var ButtonClicked = class extends CustomType {
 };
 function init9(_) {
   return new Model7(
@@ -10349,7 +10344,7 @@ function update10(model, msg) {
         new_z_index
       ]
     );
-  } else if (msg instanceof ViewportPanned) {
+  } else {
     let transform3 = msg[0];
     return new Model7(
       model.email_window,
@@ -10364,8 +10359,6 @@ function update10(model, msg) {
       model.z_index_counter,
       model.window_z_indexes
     );
-  } else {
-    return model;
   }
 }
 function create_email_window(position2, z_index) {
@@ -10395,8 +10388,7 @@ function create_email_window(position2, z_index) {
           )
         ])
       ),
-      "",
-      new ButtonClicked()
+      ""
     )
   );
 }
@@ -10427,8 +10419,7 @@ function create_dancing_window(position2, z_index) {
           )
         ])
       ),
-      "",
-      new ButtonClicked()
+      ""
     )
   );
 }
@@ -10921,10 +10912,7 @@ function create_libraries_window(position2, z_index) {
                   class$(
                     "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
                   ),
-                  (() => {
-                    let _pipe = on_click(new ButtonClicked());
-                    return stop_propagation(_pipe);
-                  })()
+                  nodrag()
                 ]),
                 toList([text2("Github")])
               )
@@ -11026,7 +11014,8 @@ function create_sites_window(position2, z_index) {
                           target("_blank"),
                           class$(
                             "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                          )
+                          ),
+                          nodrag()
                         ]),
                         toList([text2("Visit Site")])
                       )
@@ -11053,7 +11042,8 @@ function create_sites_window(position2, z_index) {
                           target("_blank"),
                           class$(
                             "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                          )
+                          ),
+                          nodrag()
                         ]),
                         toList([text2("Visit Site")])
                       )
@@ -11233,10 +11223,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      17,
+      16,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 416, end: 452, pattern_start: 427, pattern_end: 432 }
+      { value: $, start: 396, end: 432, pattern_start: 407, pattern_end: 412 }
     );
   }
   initializeTouchSupport();
@@ -11247,10 +11237,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      20,
+      19,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1, start: 536, end: 585, pattern_start: 547, pattern_end: 552 }
+      { value: $1, start: 516, end: 565, pattern_start: 527, pattern_end: 532 }
     );
   }
   return void 0;

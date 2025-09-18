@@ -9,7 +9,6 @@ import lustre/element.{text}
 import lustre/element/html.{
   a, body, div, h1, h3, head, html, img, link, p, span, style, title,
 }
-import lustre/event
 import renatillas/touch
 import renatillas/window
 
@@ -52,7 +51,6 @@ pub type Msg {
   HomerWindowDragged(x: Float, y: Float)
   DancingWindowDragged(x: Float, y: Float)
   ViewportPanned(Transform)
-  ButtonClicked
 }
 
 fn init(_flags) -> Model {
@@ -292,9 +290,6 @@ fn update(model: Model, msg: Msg) -> Model {
     ViewportPanned(transform) -> {
       Model(..model, transform: transform)
     }
-    ButtonClicked -> {
-      model
-    }
   }
 }
 
@@ -324,7 +319,6 @@ fn create_email_window(
         ]),
       ],
     ),
-    button_message: ButtonClicked,
   ))
 }
 
@@ -354,7 +348,6 @@ fn create_dancing_window(
         ]),
       ],
     ),
-    button_message: ButtonClicked,
   ))
 }
 
@@ -772,7 +765,7 @@ fn create_libraries_window(
                   class(
                     "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
                   ),
-                  event.on_click(ButtonClicked) |> event.stop_propagation,
+                  node.nodrag(),
                 ],
                 [text("Github")],
               ),
@@ -858,6 +851,7 @@ fn create_sites_window(
                       class(
                         "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
                       ),
+                      node.nodrag(),
                     ],
                     [text("Visit Site")],
                   ),
@@ -876,6 +870,7 @@ fn create_sites_window(
                       class(
                         "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
                       ),
+                      node.nodrag(),
                     ],
                     [text("Visit Site")],
                   ),

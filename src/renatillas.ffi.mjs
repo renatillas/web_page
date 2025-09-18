@@ -1,25 +1,43 @@
 // Touch support for clique-based dragging and viewport panning
 export function initializeTouchSupport() {
   
-  // Add mouse event handling for desktop
-  function handleMouseDown(e) {
-    // Check if we're clicking a button - don't prevent default to allow clicks
-    const isButton = e.target.tagName === 'BUTTON' || 
-                     e.target.tagName === 'A' || 
-                     e.target.hasAttribute('data-window-button') ||
-                     e.target.closest('button') ||
-                     e.target.closest('a');
-    
-    if (isButton) {
-      // Stop the event from reaching clique's drag system
-      e.stopImmediatePropagation();
-      return true; // Allow normal click behavior
+  // Fix button clicks inside clique nodes
+  function handleButtonClicks(e) {
+    // If clicking on a clique-node, check if we're actually clicking a button inside it
+    if (e.target.tagName === 'CLIQUE-NODE') {
+      const buttons = e.target.querySelectorAll('button, a');
+      
+      // Get mouse position relative to the clique-node
+      const nodeRect = e.target.getBoundingClientRect();
+      const mouseX = e.clientX - nodeRect.left;
+      const mouseY = e.clientY - nodeRect.top;
+      
+      // Check if mouse click is within any button's bounds
+      for (const button of buttons) {
+        const buttonRect = button.getBoundingClientRect();
+        const buttonX = buttonRect.left - nodeRect.left;
+        const buttonY = buttonRect.top - nodeRect.top;
+        
+        if (mouseX >= buttonX && mouseX <= buttonX + buttonRect.width &&
+            mouseY >= buttonY && mouseY <= buttonY + buttonRect.height) {
+          // Stop clique from handling this event and trigger the button click
+          e.stopPropagation();
+          e.preventDefault();
+          button.click();
+          return;
+        }
+      }
     }
-    return false;
+    
+    // Fallback: if directly clicking a button, stop propagation
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+      e.stopPropagation();
+    }
   }
   
-  // Add event listeners for mouse events at capture phase
-  document.addEventListener('mousedown', handleMouseDown, { capture: true });
+  // Add event listeners for both mouse and touch events in capture phase
+  document.addEventListener('mousedown', handleButtonClicks, { capture: true });
+  document.addEventListener('touchstart', handleButtonClicks, { capture: true, passive: false });
   let isDragging = false;
   let dragTarget = null;
   let canvasPanning = false;
