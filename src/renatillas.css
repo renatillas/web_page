@@ -72,3 +72,161 @@ body {
 a:hover {
   cursor: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0l3 7h7l-5.5 4 2 7-6.5-4.5L3.5 18l2-7L0 7h7z' fill='%23ff00ff'/%3E%3C/svg%3E"), pointer;
 }
+
+/* Touch support for all devices */
+.touch-draggable {
+  touch-action: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.touch-draggable * {
+  pointer-events: none !important;
+}
+
+.touch-draggable .drag-handle {
+  pointer-events: auto !important;
+  cursor: grab !important;
+}
+
+.touch-draggable .drag-handle:active {
+  cursor: grabbing !important;
+}
+
+/* Mobile-specific responsive styles */
+@media (max-width: 768px) {
+  /* Make windows responsive and better positioned on mobile */
+  [data-clique-node] {
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 100px) !important;
+  }
+  
+  /* Increase touch target sizes for mobile */
+  .cursor-move {
+    min-height: 44px;
+  }
+  
+  /* Enhanced touch dragging for mobile */
+  .drag-handle {
+    min-height: 48px !important;
+    padding: 12px !important;
+    cursor: grab !important;
+  }
+  
+  .drag-handle:active {
+    cursor: grabbing !important;
+  }
+  
+  /* Adjust window chrome for mobile */
+  .bg-gradient-to-r {
+    min-height: 44px;
+    padding: 8px 12px !important;
+  }
+  
+  /* Make buttons larger for touch */
+  .w-4.h-4, .w-5.h-4, .w-4.h-3, .w-5.h-4 {
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+  
+  /* Adjust text sizes for mobile readability */
+  .text-xs {
+    font-size: 14px !important;
+  }
+  
+  .text-sm {
+    font-size: 16px !important;
+  }
+  
+  /* Make content more readable on mobile */
+  .p-2 {
+    padding: 12px !important;
+  }
+  
+  .p-4 {
+    padding: 16px !important;
+  }
+  
+  .p-6 {
+    padding: 20px !important;
+  }
+  
+  /* Adjust gaps for mobile */
+  .gap-2 {
+    gap: 8px !important;
+  }
+  
+  .gap-4 {
+    gap: 12px !important;
+  }
+  
+  .gap-8 {
+    gap: 16px !important;
+  }
+  
+  /* Make taskbar more mobile-friendly */
+  .fixed.bottom-0 {
+    padding: 8px !important;
+    flex-wrap: wrap;
+    min-height: 60px;
+  }
+  
+  .fixed.bottom-0 .flex-1 {
+    order: 3;
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  /* Adjust window positioning for mobile - stack windows vertically */
+  .w-96 {
+    width: calc(100vw - 40px) !important;
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small mobile adjustments */
+  .text-4xl {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  .text-lg {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Stack stats horizontally on very small screens */
+  .flex.justify-center.gap-8 {
+    gap: 12px !important;
+  }
+  
+  .flex.justify-center.gap-8 > div {
+    flex: 1;
+    min-width: 60px;
+  }
+  
+  /* Reduce margins and padding for very small screens */
+  .p-6 {
+    padding: 12px !important;
+  }
+  
+  .m-2 {
+    margin: 8px !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 12px !important;
+  }
+  
+  .mt-4 {
+    margin-top: 12px !important;
+  }
+}

@@ -2294,24 +2294,24 @@ var Property = class extends CustomType {
   }
 };
 var Event2 = class extends CustomType {
-  constructor(kind, name2, handler2, include, prevent_default3, stop_propagation2, immediate, debounce, throttle) {
+  constructor(kind, name2, handler2, include, prevent_default3, stop_propagation3, immediate, debounce, throttle) {
     super();
     this.kind = kind;
     this.name = name2;
     this.handler = handler2;
     this.include = include;
     this.prevent_default = prevent_default3;
-    this.stop_propagation = stop_propagation2;
+    this.stop_propagation = stop_propagation3;
     this.immediate = immediate;
     this.debounce = debounce;
     this.throttle = throttle;
   }
 };
 var Handler = class extends CustomType {
-  constructor(prevent_default3, stop_propagation2, message) {
+  constructor(prevent_default3, stop_propagation3, message) {
     super();
     this.prevent_default = prevent_default3;
-    this.stop_propagation = stop_propagation2;
+    this.stop_propagation = stop_propagation3;
     this.message = message;
   }
 };
@@ -2467,14 +2467,14 @@ function property(name2, value) {
   return new Property(property_kind, name2, value);
 }
 var event_kind = 2;
-function event(name2, handler2, include, prevent_default3, stop_propagation2, immediate, debounce, throttle) {
+function event(name2, handler2, include, prevent_default3, stop_propagation3, immediate, debounce, throttle) {
   return new Event2(
     event_kind,
     name2,
     handler2,
     include,
     prevent_default3,
-    stop_propagation2,
+    stop_propagation3,
     immediate,
     debounce,
     throttle
@@ -3275,6 +3275,9 @@ function img(attrs) {
 }
 function svg(attrs, children2) {
   return namespaced("http://www.w3.org/2000/svg", "svg", attrs, children2);
+}
+function button(attrs, children2) {
+  return element2("button", attrs, children2);
 }
 function slot(attrs, fallback) {
   return element2("slot", attrs, fallback);
@@ -6313,8 +6316,8 @@ function root3(attributes, children2) {
 function emit2(event4, data2) {
   return event2(event4, data2);
 }
-function handler(message, prevent_default3, stop_propagation2) {
-  return new Handler(prevent_default3, stop_propagation2, message);
+function handler(message, prevent_default3, stop_propagation3) {
+  return new Handler(prevent_default3, stop_propagation3, message);
 }
 function is_immediate_event(name2) {
   if (name2 === "input") {
@@ -6377,6 +6380,26 @@ function prevent_default(event4) {
   } else {
     return event4;
   }
+}
+function stop_propagation(event4) {
+  if (event4 instanceof Event2) {
+    return new Event2(
+      event4.kind,
+      event4.name,
+      event4.handler,
+      event4.include,
+      event4.prevent_default,
+      always,
+      event4.immediate,
+      event4.debounce,
+      event4.throttle
+    );
+  } else {
+    return event4;
+  }
+}
+function on_click(msg) {
+  return on("click", success(msg));
 }
 
 // build/dev/javascript/clique/clique/edge.mjs
@@ -6744,7 +6767,7 @@ var add_event_listener = (shadow_root, name2, handler2) => {
 var prevent_default2 = (event4, yes) => {
   if (yes) event4.preventDefault();
 };
-var stop_propagation = (event4, yes) => {
+var stop_propagation2 = (event4, yes) => {
   if (yes) event4.stopPropagation();
 };
 
@@ -6760,7 +6783,7 @@ function add_event_listener2(name2, decoder3) {
           if ($ instanceof Ok) {
             let handler2 = $[0];
             let $1 = prevent_default2(event4, handler2.prevent_default);
-            let $2 = stop_propagation(event4, handler2.stop_propagation);
+            let $2 = stop_propagation2(event4, handler2.stop_propagation);
             return dispatch(handler2.message);
           } else {
             return void 0;
@@ -9652,6 +9675,247 @@ function on_zoom2(handler2) {
   return on_zoom(handler2);
 }
 
+// build/dev/javascript/renatillas/renatillas.ffi.mjs
+function initializeTouchSupport() {
+  function handleMouseDown(e) {
+    const isButton = e.target.tagName === "BUTTON" || e.target.tagName === "A" || e.target.hasAttribute("data-window-button") || e.target.closest("button") || e.target.closest("a");
+    if (isButton) {
+      e.stopImmediatePropagation();
+      return true;
+    }
+    return false;
+  }
+  document.addEventListener("mousedown", handleMouseDown, { capture: true });
+  let isDragging = false;
+  let dragTarget = null;
+  let canvasPanning = false;
+  let initialTouchPos = { x: 0, y: 0 };
+  function createMouseEvent(type, touch, target2 = null) {
+    const mouseEvent = new MouseEvent(type, {
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      screenX: touch.screenX,
+      screenY: touch.screenY,
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      button: 0,
+      buttons: type === "mousedown" || type === "mousemove" ? 1 : 0
+    });
+    if (target2) {
+      Object.defineProperty(mouseEvent, "target", { value: target2 });
+    }
+    return mouseEvent;
+  }
+  function findDragHandle(element4) {
+    let current = element4;
+    while (current && !current.classList.contains("touch-draggable")) {
+      if (current.classList.contains("drag-handle")) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+  function handleTouchStart(e) {
+    const touch = e.touches[0];
+    initialTouchPos = { x: touch.clientX, y: touch.clientY };
+    const isButton = e.target.tagName === "BUTTON" || e.target.tagName === "A" || e.target.hasAttribute("data-window-button") || e.target.closest("button") || e.target.closest("a");
+    if (isButton) {
+      return;
+    }
+    const draggableElement = e.target.closest(".touch-draggable");
+    const dragHandle = findDragHandle(e.target);
+    if (draggableElement && dragHandle) {
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = true;
+      dragTarget = draggableElement;
+      const mouseEvent = createMouseEvent("mousedown", touch, dragHandle);
+      dragHandle.dispatchEvent(mouseEvent);
+      return;
+    }
+    const cliqueViewport = e.target.closest("clique-viewport") || document.querySelector("clique-viewport");
+    const cliqueBackground = e.target.closest("clique-background") || e.target.matches("clique-background") || e.target.tagName === "svg" && e.target.closest("clique-background") || e.target.tagName === "rect" && e.target.closest("clique-background");
+    if ((cliqueViewport || cliqueBackground) && !draggableElement) {
+      e.preventDefault();
+      canvasPanning = true;
+      let panTarget = cliqueViewport;
+      if (cliqueViewport && cliqueViewport.shadowRoot) {
+        const container = cliqueViewport.shadowRoot.querySelector("#container");
+        if (container) {
+          panTarget = container;
+        }
+      }
+      if (!panTarget) {
+        panTarget = document.querySelector("clique-viewport") || document.body;
+      }
+      const mouseEvent = createMouseEvent("mousedown", touch, panTarget);
+      panTarget.dispatchEvent(mouseEvent);
+      return;
+    }
+  }
+  function handleTouchMove(e) {
+    const isButton = e.target.tagName === "BUTTON" || e.target.tagName === "A" || e.target.hasAttribute("data-window-button") || e.target.closest("button") || e.target.closest("a");
+    if (isButton && !isDragging && !canvasPanning) return;
+    if (!isDragging && !canvasPanning) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    if (isDragging && dragTarget) {
+      const mouseEvent = createMouseEvent("mousemove", touch);
+      document.dispatchEvent(mouseEvent);
+    } else if (canvasPanning) {
+      const mouseEvent = createMouseEvent("mousemove", touch);
+      document.dispatchEvent(mouseEvent);
+    }
+  }
+  function handleTouchEnd(e) {
+    if (!isDragging && !canvasPanning) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const mouseEvent = new MouseEvent("mouseup", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      button: 0,
+      buttons: 0
+    });
+    document.dispatchEvent(mouseEvent);
+    isDragging = false;
+    dragTarget = null;
+    canvasPanning = false;
+  }
+  function addTouchListeners() {
+    document.addEventListener("touchstart", handleTouchStart, { passive: false, capture: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: false, capture: true });
+    document.addEventListener("touchcancel", handleTouchEnd, { passive: false, capture: true });
+    document.addEventListener("contextmenu", function(e) {
+      if (e.target.closest(".touch-draggable") || e.target.closest("[data-clique-root]")) {
+        e.preventDefault();
+      }
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", addTouchListeners);
+  } else {
+    addTouchListeners();
+  }
+}
+
+// build/dev/javascript/renatillas/renatillas/window.mjs
+var WindowConfig = class extends CustomType {
+  constructor(id2, title2, icon, position2, z_index, on_drag2, content, width, button_message) {
+    super();
+    this.id = id2;
+    this.title = title2;
+    this.icon = icon;
+    this.position = position2;
+    this.z_index = z_index;
+    this.on_drag = on_drag2;
+    this.content = content;
+    this.width = width;
+    this.button_message = button_message;
+  }
+};
+function create_window_controls(button_message) {
+  return div(
+    toList([class$("flex gap-1")]),
+    toList([
+      button(
+        toList([
+          class$(
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
+          ),
+          attribute2("data-window-button", "true"),
+          stop_propagation(on_click(button_message))
+        ]),
+        toList([text3("_")])
+      ),
+      button(
+        toList([
+          class$(
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
+          ),
+          attribute2("data-window-button", "true"),
+          stop_propagation(on_click(button_message))
+        ]),
+        toList([text3("\u25A1")])
+      ),
+      button(
+        toList([
+          class$(
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
+          ),
+          attribute2("data-window-button", "true"),
+          stop_propagation(on_click(button_message))
+        ]),
+        toList([text3("\xD7")])
+      )
+    ])
+  );
+}
+function create_window(config) {
+  return node(
+    config.id,
+    toList([
+      position(config.position[0], config.position[1]),
+      on_drag((_, x, y, _1, _2) => {
+        return config.on_drag(x, y);
+      }),
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(config.z_index))
+    ]),
+    toList([
+      div(
+        toList([
+          class$(
+            "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] " + config.width
+          )
+        ]),
+        toList([
+          div(
+            toList([
+              class$(
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
+              )
+            ]),
+            toList([
+              div(
+                toList([class$("flex items-center gap-2")]),
+                toList([
+                  div(
+                    toList([
+                      class$(
+                        (() => {
+                          let $ = config.icon;
+                          if ($ === "\u{1F4C1}") {
+                            return "w-4 h-4 bg-[#ffff00] border border-[#808080] flex items-center justify-center text-xs text-black font-bold";
+                          } else {
+                            return "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold";
+                          }
+                        })()
+                      )
+                    ]),
+                    toList([text3(config.icon)])
+                  ),
+                  span(
+                    toList([class$("font-bold text-sm")]),
+                    toList([text3(config.title)])
+                  )
+                ])
+              ),
+              create_window_controls(config.button_message)
+            ])
+          ),
+          config.content
+        ])
+      )
+    ])
+  );
+}
+
 // build/dev/javascript/renatillas/renatillas.mjs
 var FILEPATH = "src/renatillas.gleam";
 var WindowPosition = class extends CustomType {
@@ -9662,7 +9926,7 @@ var WindowPosition = class extends CustomType {
   }
 };
 var Model7 = class extends CustomType {
-  constructor(email_window, skull_window, homer_window, header_window, about_window, libraries_window, sites_window, transform3) {
+  constructor(email_window, skull_window, homer_window, header_window, about_window, libraries_window, sites_window, dancing_window, transform3, z_index_counter, window_z_indexes) {
     super();
     this.email_window = email_window;
     this.skull_window = skull_window;
@@ -9671,7 +9935,10 @@ var Model7 = class extends CustomType {
     this.about_window = about_window;
     this.libraries_window = libraries_window;
     this.sites_window = sites_window;
+    this.dancing_window = dancing_window;
     this.transform = transform3;
+    this.z_index_counter = z_index_counter;
+    this.window_z_indexes = window_z_indexes;
   }
 };
 var EmailWindowDragged = class extends CustomType {
@@ -9723,28 +9990,56 @@ var HomerWindowDragged = class extends CustomType {
     this.y = y;
   }
 };
+var DancingWindowDragged = class extends CustomType {
+  constructor(x, y) {
+    super();
+    this.x = x;
+    this.y = y;
+  }
+};
 var ViewportPanned = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
   }
 };
+var ButtonClicked = class extends CustomType {
+};
 function init9(_) {
   return new Model7(
-    new WindowPosition(800, 50),
-    new WindowPosition(50, 150),
-    new WindowPosition(30, 600),
-    new WindowPosition(300, 50),
-    new WindowPosition(200, 300),
-    new WindowPosition(400, 450),
-    new WindowPosition(600, 600),
-    init2()
+    new WindowPosition(1200, 120),
+    new WindowPosition(1100, 10),
+    new WindowPosition(600, 250),
+    new WindowPosition(-10, 20),
+    new WindowPosition(10, 320),
+    new WindowPosition(0, 530),
+    new WindowPosition(450, 0),
+    new WindowPosition(1200, 400),
+    [0, 0, 0.8],
+    8,
+    [1, 2, 3, 4, 5, 6, 7, 8]
   );
 }
 function update10(model, msg) {
   if (msg instanceof EmailWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let skull_z;
+    let header_z;
+    let about_z;
+    let libraries_z;
+    let sites_z;
+    let homer_z;
+    let dancing_z;
+    skull_z = $[1];
+    header_z = $[2];
+    about_z = $[3];
+    libraries_z = $[4];
+    sites_z = $[5];
+    homer_z = $[6];
+    dancing_z = $[7];
     return new Model7(
       new WindowPosition(x, y),
       model.skull_window,
@@ -9753,11 +10048,39 @@ function update10(model, msg) {
       model.about_window,
       model.libraries_window,
       model.sites_window,
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        new_z_index,
+        skull_z,
+        header_z,
+        about_z,
+        libraries_z,
+        sites_z,
+        homer_z,
+        dancing_z
+      ]
     );
   } else if (msg instanceof SkullWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let header_z;
+    let about_z;
+    let libraries_z;
+    let sites_z;
+    let homer_z;
+    let dancing_z;
+    email_z = $[0];
+    header_z = $[2];
+    about_z = $[3];
+    libraries_z = $[4];
+    sites_z = $[5];
+    homer_z = $[6];
+    dancing_z = $[7];
     return new Model7(
       model.email_window,
       new WindowPosition(x, y),
@@ -9766,11 +10089,39 @@ function update10(model, msg) {
       model.about_window,
       model.libraries_window,
       model.sites_window,
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        new_z_index,
+        header_z,
+        about_z,
+        libraries_z,
+        sites_z,
+        homer_z,
+        dancing_z
+      ]
     );
   } else if (msg instanceof HeaderWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let skull_z;
+    let about_z;
+    let libraries_z;
+    let sites_z;
+    let homer_z;
+    let dancing_z;
+    email_z = $[0];
+    skull_z = $[1];
+    about_z = $[3];
+    libraries_z = $[4];
+    sites_z = $[5];
+    homer_z = $[6];
+    dancing_z = $[7];
     return new Model7(
       model.email_window,
       model.skull_window,
@@ -9779,11 +10130,39 @@ function update10(model, msg) {
       model.about_window,
       model.libraries_window,
       model.sites_window,
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        skull_z,
+        new_z_index,
+        about_z,
+        libraries_z,
+        sites_z,
+        homer_z,
+        dancing_z
+      ]
     );
   } else if (msg instanceof AboutWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let skull_z;
+    let header_z;
+    let libraries_z;
+    let sites_z;
+    let homer_z;
+    let dancing_z;
+    email_z = $[0];
+    skull_z = $[1];
+    header_z = $[2];
+    libraries_z = $[4];
+    sites_z = $[5];
+    homer_z = $[6];
+    dancing_z = $[7];
     return new Model7(
       model.email_window,
       model.skull_window,
@@ -9792,11 +10171,39 @@ function update10(model, msg) {
       new WindowPosition(x, y),
       model.libraries_window,
       model.sites_window,
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        skull_z,
+        header_z,
+        new_z_index,
+        libraries_z,
+        sites_z,
+        homer_z,
+        dancing_z
+      ]
     );
   } else if (msg instanceof LibrariesWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let skull_z;
+    let header_z;
+    let about_z;
+    let sites_z;
+    let homer_z;
+    let dancing_z;
+    email_z = $[0];
+    skull_z = $[1];
+    header_z = $[2];
+    about_z = $[3];
+    sites_z = $[5];
+    homer_z = $[6];
+    dancing_z = $[7];
     return new Model7(
       model.email_window,
       model.skull_window,
@@ -9805,11 +10212,39 @@ function update10(model, msg) {
       model.about_window,
       new WindowPosition(x, y),
       model.sites_window,
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        skull_z,
+        header_z,
+        about_z,
+        new_z_index,
+        sites_z,
+        homer_z,
+        dancing_z
+      ]
     );
   } else if (msg instanceof SitesWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let skull_z;
+    let header_z;
+    let about_z;
+    let libraries_z;
+    let homer_z;
+    let dancing_z;
+    email_z = $[0];
+    skull_z = $[1];
+    header_z = $[2];
+    about_z = $[3];
+    libraries_z = $[4];
+    homer_z = $[6];
+    dancing_z = $[7];
     return new Model7(
       model.email_window,
       model.skull_window,
@@ -9818,11 +10253,39 @@ function update10(model, msg) {
       model.about_window,
       model.libraries_window,
       new WindowPosition(x, y),
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        skull_z,
+        header_z,
+        about_z,
+        libraries_z,
+        new_z_index,
+        homer_z,
+        dancing_z
+      ]
     );
   } else if (msg instanceof HomerWindowDragged) {
     let x = msg.x;
     let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let skull_z;
+    let header_z;
+    let about_z;
+    let libraries_z;
+    let sites_z;
+    let dancing_z;
+    email_z = $[0];
+    skull_z = $[1];
+    header_z = $[2];
+    about_z = $[3];
+    libraries_z = $[4];
+    sites_z = $[5];
+    dancing_z = $[7];
     return new Model7(
       model.email_window,
       model.skull_window,
@@ -9831,9 +10294,62 @@ function update10(model, msg) {
       model.about_window,
       model.libraries_window,
       model.sites_window,
-      model.transform
+      model.dancing_window,
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        skull_z,
+        header_z,
+        about_z,
+        libraries_z,
+        sites_z,
+        new_z_index,
+        dancing_z
+      ]
     );
-  } else {
+  } else if (msg instanceof DancingWindowDragged) {
+    let x = msg.x;
+    let y = msg.y;
+    let new_z_index = model.z_index_counter + 1;
+    let $ = model.window_z_indexes;
+    let email_z;
+    let skull_z;
+    let header_z;
+    let about_z;
+    let libraries_z;
+    let sites_z;
+    let homer_z;
+    email_z = $[0];
+    skull_z = $[1];
+    header_z = $[2];
+    about_z = $[3];
+    libraries_z = $[4];
+    sites_z = $[5];
+    homer_z = $[6];
+    return new Model7(
+      model.email_window,
+      model.skull_window,
+      model.homer_window,
+      model.header_window,
+      model.about_window,
+      model.libraries_window,
+      model.sites_window,
+      new WindowPosition(x, y),
+      model.transform,
+      new_z_index,
+      [
+        email_z,
+        skull_z,
+        header_z,
+        about_z,
+        libraries_z,
+        sites_z,
+        homer_z,
+        new_z_index
+      ]
+    );
+  } else if (msg instanceof ViewportPanned) {
     let transform3 = msg[0];
     return new Model7(
       model.email_window,
@@ -9843,91 +10359,80 @@ function update10(model, msg) {
       model.about_window,
       model.libraries_window,
       model.sites_window,
-      transform3
+      model.dancing_window,
+      transform3,
+      model.z_index_counter,
+      model.window_z_indexes
     );
+  } else {
+    return model;
   }
 }
-function create_email_window(position2) {
-  return node(
-    "email-window",
-    toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new EmailWindowDragged(x, y);
-        }
-      ),
-      class$("cursor-move select-none")
-    ]),
-    toList([
+function create_email_window(position2, z_index) {
+  return create_window(
+    new WindowConfig(
+      "email-window",
+      "email.gif - Paint",
+      "\u{1F4E7}",
+      [position2.x, position2.y],
+      z_index,
+      (var0, var1) => {
+        return new EmailWindowDragged(var0, var1);
+      },
       div(
         toList([
           class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
+            "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
           )
         ]),
         toList([
-          div(
+          img(
             toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\u{1F4E7}")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-xs")]),
-                    toList([text2("email.gif - Paint")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-3 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
-              )
-            ]),
-            toList([
-              img(
-                toList([
-                  src("/priv/static/email.gif"),
-                  alt("Email animation"),
-                  class$("w-24 h-24 pixelated")
-                ])
-              )
+              src("/priv/static/email.gif"),
+              alt("Email animation"),
+              class$("w-24 h-24 pixelated")
             ])
           )
         ])
-      )
-    ])
+      ),
+      "",
+      new ButtonClicked()
+    )
   );
 }
-function create_homer_window(position2) {
+function create_dancing_window(position2, z_index) {
+  return create_window(
+    new WindowConfig(
+      "dancing-window",
+      "dancing.gif - Media Player",
+      "\u{1F483}",
+      [position2.x, position2.y],
+      z_index,
+      (var0, var1) => {
+        return new DancingWindowDragged(var0, var1);
+      },
+      div(
+        toList([
+          class$(
+            "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+          )
+        ]),
+        toList([
+          img(
+            toList([
+              src("/priv/static/dancing.gif"),
+              alt("Dancing animation"),
+              class$("w-24 h-24 pixelated")
+            ])
+          )
+        ])
+      ),
+      "",
+      new ButtonClicked()
+    )
+  );
+}
+function create_homer_window(position2, z_index) {
   return node(
     "homer-window",
     toList([
@@ -9937,7 +10442,8 @@ function create_homer_window(position2) {
           return new HomerWindowDragged(x, y);
         }
       ),
-      class$("cursor-move select-none")
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(z_index))
     ]),
     toList([
       div(
@@ -9950,7 +10456,7 @@ function create_homer_window(position2) {
           div(
             toList([
               class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
               )
             ]),
             toList([
@@ -10007,7 +10513,7 @@ function create_homer_window(position2) {
     ])
   );
 }
-function create_skull_window(position2) {
+function create_skull_window(position2, z_index) {
   return node(
     "skull-window",
     toList([
@@ -10017,7 +10523,8 @@ function create_skull_window(position2) {
           return new SkullWindowDragged(x, y);
         }
       ),
-      class$("cursor-move select-none")
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(z_index))
     ]),
     toList([
       div(
@@ -10030,7 +10537,7 @@ function create_skull_window(position2) {
           div(
             toList([
               class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
               )
             ]),
             toList([
@@ -10087,7 +10594,7 @@ function create_skull_window(position2) {
     ])
   );
 }
-function create_header_window(position2) {
+function create_header_window(position2, z_index) {
   return node(
     "header-window",
     toList([
@@ -10097,7 +10604,8 @@ function create_header_window(position2) {
           return new HeaderWindowDragged(x, y);
         }
       ),
-      class$("cursor-move select-none")
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(z_index))
     ]),
     toList([
       div(
@@ -10110,7 +10618,7 @@ function create_header_window(position2) {
           div(
             toList([
               class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
               )
             ]),
             toList([
@@ -10240,7 +10748,7 @@ function create_header_window(position2) {
     ])
   );
 }
-function create_about_window(position2) {
+function create_about_window(position2, z_index) {
   return node(
     "about-window",
     toList([
@@ -10250,20 +10758,21 @@ function create_about_window(position2) {
           return new AboutWindowDragged(x, y);
         }
       ),
-      class$("cursor-move select-none")
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(z_index))
     ]),
     toList([
       div(
         toList([
           class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
+            "max-w-md bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
           )
         ]),
         toList([
           div(
             toList([
               class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
               )
             ]),
             toList([
@@ -10326,7 +10835,7 @@ function create_about_window(position2) {
     ])
   );
 }
-function create_libraries_window(position2) {
+function create_libraries_window(position2, z_index) {
   return node(
     "libraries-window",
     toList([
@@ -10336,20 +10845,21 @@ function create_libraries_window(position2) {
           return new LibrariesWindowDragged(x, y);
         }
       ),
-      class$("cursor-move select-none")
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(z_index))
     ]),
     toList([
       div(
         toList([
           class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
+            "max-w-md bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
           )
         ]),
         toList([
           div(
             toList([
               class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
               )
             ]),
             toList([
@@ -10404,18 +10914,19 @@ function create_libraries_window(position2) {
                   )
                 ])
               ),
-              div(
+              a(
                 toList([
+                  href("https://github.com/renatillas"),
+                  target("_blank"),
                   class$(
-                    "bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] px-3 py-2 inline-block"
-                  )
+                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                  ),
+                  (() => {
+                    let _pipe = on_click(new ButtonClicked());
+                    return stop_propagation(_pipe);
+                  })()
                 ]),
-                toList([
-                  span(
-                    toList([class$("text-xs text-black font-bold")]),
-                    toList([text2("\u{1F4C4} gleam_libraries.txt")])
-                  )
-                ])
+                toList([text2("Github")])
               )
             ])
           )
@@ -10424,7 +10935,7 @@ function create_libraries_window(position2) {
     ])
   );
 }
-function create_sites_window(position2) {
+function create_sites_window(position2, z_index) {
   return node(
     "sites-window",
     toList([
@@ -10434,7 +10945,8 @@ function create_sites_window(position2) {
           return new SitesWindowDragged(x, y);
         }
       ),
-      class$("cursor-move select-none")
+      class$("cursor-move select-none touch-draggable"),
+      style("z-index", to_string(z_index))
     ]),
     toList([
       div(
@@ -10447,7 +10959,7 @@ function create_sites_window(position2) {
           div(
             toList([
               class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between"
+                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
               )
             ]),
             toList([
@@ -10510,10 +11022,10 @@ function create_sites_window(position2) {
                       ),
                       a(
                         toList([
-                          href("https://latiendadelehelen.com"),
+                          href("https://latiendadehelen.com"),
                           target("_blank"),
                           class$(
-                            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0]"
+                            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
                           )
                         ]),
                         toList([text2("Visit Site")])
@@ -10540,7 +11052,7 @@ function create_sites_window(position2) {
                           href("https://keitepinxa.studio"),
                           target("_blank"),
                           class$(
-                            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0]"
+                            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
                           )
                         ]),
                         toList([text2("Visit Site")])
@@ -10574,7 +11086,7 @@ function view7(model) {
           ),
           style2(
             toList([]),
-            "\n        .pixelated {\n          image-rendering: -moz-crisp-edges;\n          image-rendering: -webkit-crisp-edges; \n          image-rendering: pixelated;\n          image-rendering: crisp-edges;\n        }\n        .blink {\n          animation: blink 1s linear infinite;\n        }\n        @keyframes blink {\n          0%, 50% { opacity: 1; }\n          51%, 100% { opacity: 0; }\n        }\n      "
+            "\n        .pixelated {\n          image-rendering: -moz-crisp-edges;\n          image-rendering: -webkit-crisp-edges; \n          image-rendering: pixelated;\n          image-rendering: crisp-edges;\n        }\n        .blink {\n          animation: blink 1s linear infinite;\n        }\n        @keyframes blink {\n          0%, 50% { opacity: 1; }\n          51%, 100% { opacity: 0; }\n        }\n        /* Enhanced touch support for mobile dragging */\n        .touch-draggable {\n          touch-action: none;\n          -webkit-user-select: none;\n          -moz-user-select: none;\n          -ms-user-select: none;\n          user-select: none;\n          -webkit-touch-callout: none;\n        }\n        .drag-handle {\n          cursor: move;\n          -webkit-user-drag: none;\n          -khtml-user-drag: none;\n          -moz-user-drag: none;\n          -o-user-drag: none;\n          user-drag: none;\n        }\n        /* Prevent text selection on mobile */\n        .touch-draggable, .touch-draggable * {\n          -webkit-tap-highlight-color: transparent;\n        }\n        /* Prevent dragging on buttons and links */\n        .no-drag, button, a, [data-window-button] {\n          pointer-events: auto !important;\n          position: relative;\n          z-index: 9999;\n        }\n        /* Ensure drag handles don't override button clicks */\n        .drag-handle button,\n        .drag-handle a,\n        .drag-handle [data-window-button] {\n          pointer-events: auto !important;\n          z-index: 10000;\n        }\n      "
           )
         ])
       ),
@@ -10587,7 +11099,8 @@ function view7(model) {
         toList([
           root8(
             toList([
-              class$("w-full h-full absolute inset-0"),
+              class$("w-full h-full absolute inset-0 clique-root"),
+              attribute2("data-clique-root", "true"),
               transform2(model.transform),
               on_pan2((var0) => {
                 return new ViewportPanned(var0);
@@ -10606,16 +11119,62 @@ function view7(model) {
               ),
               nodes(
                 toList([
-                  ["email-window", create_email_window(model.email_window)],
-                  ["homer-window", create_homer_window(model.homer_window)],
-                  ["skull-window", create_skull_window(model.skull_window)],
-                  ["header-window", create_header_window(model.header_window)],
-                  ["about-window", create_about_window(model.about_window)],
+                  [
+                    "email-window",
+                    create_email_window(
+                      model.email_window,
+                      model.window_z_indexes[0]
+                    )
+                  ],
+                  [
+                    "skull-window",
+                    create_skull_window(
+                      model.skull_window,
+                      model.window_z_indexes[1]
+                    )
+                  ],
+                  [
+                    "header-window",
+                    create_header_window(
+                      model.header_window,
+                      model.window_z_indexes[2]
+                    )
+                  ],
+                  [
+                    "about-window",
+                    create_about_window(
+                      model.about_window,
+                      model.window_z_indexes[3]
+                    )
+                  ],
                   [
                     "libraries-window",
-                    create_libraries_window(model.libraries_window)
+                    create_libraries_window(
+                      model.libraries_window,
+                      model.window_z_indexes[4]
+                    )
                   ],
-                  ["sites-window", create_sites_window(model.sites_window)]
+                  [
+                    "sites-window",
+                    create_sites_window(
+                      model.sites_window,
+                      model.window_z_indexes[5]
+                    )
+                  ],
+                  [
+                    "homer-window",
+                    create_homer_window(
+                      model.homer_window,
+                      model.window_z_indexes[6]
+                    )
+                  ],
+                  [
+                    "dancing-window",
+                    create_dancing_window(
+                      model.dancing_window,
+                      model.window_z_indexes[7]
+                    )
+                  ]
                 ])
               )
             ])
@@ -10623,7 +11182,7 @@ function view7(model) {
           div(
             toList([
               class$(
-                "fixed bottom-0 left-0 right-0 bg-[#c0c0c0] border-t-2 border-t-white p-2 flex items-center justify-between z-50"
+                "fixed max-h-12 bottom-0 left-0 right-0 bg-[#c0c0c0] border-t-2 border-t-white p-2 flex items-center justify-between z-50"
               )
             ]),
             toList([
@@ -10648,11 +11207,7 @@ function view7(model) {
                 toList([
                   p(
                     toList([class$("text-black text-xs font-bold")]),
-                    toList([
-                      text2(
-                        "BUILT WITH \u2665 IN GLEAM \u2022 WINDOWS Y2K STYLE \u2022 FUNCTIONAL IS BEAUTIFUL"
-                      )
-                    ])
+                    toList([text2("BUILT WITH \u2665 GLEAM")])
                   )
                 ])
               ),
@@ -10678,12 +11233,13 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      13,
+      17,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 330, end: 366, pattern_start: 341, pattern_end: 346 }
+      { value: $, start: 416, end: 452, pattern_start: 427, pattern_end: 432 }
     );
   }
+  initializeTouchSupport();
   let app = simple(init9, update10, view7);
   let $1 = start3(app, "#app", void 0);
   if (!($1 instanceof Ok)) {
@@ -10691,10 +11247,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      15,
+      20,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1, start: 415, end: 464, pattern_start: 426, pattern_end: 431 }
+      { value: $1, start: 536, end: 585, pattern_start: 547, pattern_end: 552 }
     );
   }
   return void 0;
