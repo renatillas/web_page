@@ -625,7 +625,7 @@ fn create_sites_window(position: WindowPosition) -> element.Element(Msg) {
                   ]),
                   a(
                     [
-                      href("https://latiendadelehelen.com"),
+                      href("https://latiendadehelen.com"),
                       target("_blank"),
                       class(
                         "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0]",
