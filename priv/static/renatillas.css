@@ -200,8 +200,14 @@
   .bottom-0 {
     bottom: calc(var(--spacing) * 0);
   }
+  .bottom-12 {
+    bottom: calc(var(--spacing) * 12);
+  }
   .left-0 {
     left: calc(var(--spacing) * 0);
+  }
+  .left-2 {
+    left: calc(var(--spacing) * 2);
   }
   .z-50 {
     z-index: 50;
@@ -272,6 +278,9 @@
   .max-h-12 {
     max-height: calc(var(--spacing) * 12);
   }
+  .max-h-64 {
+    max-height: calc(var(--spacing) * 64);
+  }
   .min-h-screen {
     min-height: 100vh;
   }
@@ -302,17 +311,14 @@
   .max-w-sm {
     max-width: var(--container-sm);
   }
+  .min-w-48 {
+    min-width: calc(var(--spacing) * 48);
+  }
   .flex-1 {
     flex: 1;
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
-  }
-  .cursor-move {
-    cursor: move;
-  }
-  .cursor-pointer {
-    cursor: pointer;
   }
   .items-center {
     align-items: center;
@@ -353,6 +359,9 @@
   .overflow-x-hidden {
     overflow-x: hidden;
   }
+  .overflow-y-auto {
+    overflow-y: auto;
+  }
   .rounded {
     border-radius: 0.25rem;
   }
@@ -367,6 +376,10 @@
   .border-t-2 {
     border-top-style: var(--tw-border-style);
     border-top-width: 2px;
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
   }
   .border-\[\#808080\] {
     border-color: #808080;
@@ -422,6 +435,14 @@
   }
   .from-\[\#0000ff\] {
     --tw-gradient-from: #0000ff;
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .from-\[\#000080\] {
+    --tw-gradient-from: #000080;
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .to-\[\#0000ff\] {
+    --tw-gradient-to: #0000ff;
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
   .to-\[\#000080\] {
@@ -505,6 +526,10 @@
     --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
+  .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
   .blur {
     --tw-blur: blur(8px);
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
@@ -518,11 +543,23 @@
     -webkit-user-select: none;
     user-select: none;
   }
+  .hover\:bg-\[\#009000\] {
+    &:hover {
+      @media (hover: hover) {
+        background-color: #009000;
+      }
+    }
+  }
   .hover\:bg-\[\#d0d0d0\] {
     &:hover {
       @media (hover: hover) {
         background-color: #d0d0d0;
       }
+    }
+  }
+  .active\:border-t-\[\#404040\] {
+    &:active {
+      border-top-color: #404040;
     }
   }
   .active\:border-t-\[\#808080\] {
@@ -538,6 +575,11 @@
   .active\:border-b-white {
     &:active {
       border-bottom-color: var(--color-white);
+    }
+  }
+  .active\:border-l-\[\#404040\] {
+    &:active {
+      border-left-color: #404040;
     }
   }
   .active\:border-l-\[\#808080\] {
@@ -741,7 +783,7 @@
   animation: glitch 2s linear infinite;
 }
 body {
-  cursor: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0l3 7h7l-5.5 4 2 7-6.5-4.5L3.5 18l2-7L0 7h7z' fill='%2300ff41'/%3E%3C/svg%3E"), auto;
+  cursor: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0l3 7h7l-5.5 4 2 7-6.5-4.5L3.5 18l2-7L0 7h7z' fill='%2300ff41'/%3E%3C/svg%3E"), auto !important;
 }
 a:hover {
   cursor: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0l3 7h7l-5.5 4 2 7-6.5-4.5L3.5 18l2-7L0 7h7z' fill='%23ff00ff'/%3E%3C/svg%3E"), pointer;

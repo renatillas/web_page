@@ -4672,10 +4672,10 @@ var Reconciler = class {
     const data2 = this.#useServerEvents ? createServerEvent(event4, include ?? []) : event4;
     const throttle = throttles.get(type);
     if (throttle) {
-      const now = Date.now();
+      const now2 = Date.now();
       const last = throttle.last || 0;
-      if (now > last + throttle.delay) {
-        throttle.last = now;
+      if (now2 > last + throttle.delay) {
+        throttle.last = now2;
         throttle.lastEvent = event4;
         this.#dispatch(data2, path2, type, immediate);
       }
@@ -9664,6 +9664,17 @@ function on_zoom2(handler2) {
   return on_zoom(handler2);
 }
 
+// build/dev/javascript/plinth/date_ffi.mjs
+function now() {
+  return /* @__PURE__ */ new Date();
+}
+function hours(d) {
+  return d.getHours();
+}
+function minutes(d) {
+  return d.getMinutes();
+}
+
 // build/dev/javascript/renatillas/renatillas.ffi.mjs
 function initializeTouchSupport() {
   function handleButtonClicks(e) {
@@ -9844,7 +9855,7 @@ function create_window_controls(on_action, is_maximized) {
       button(
         toList([
           class$(
-            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white "
           ),
           nodrag(),
           on_click(on_action(new Minimize()))
@@ -9854,7 +9865,7 @@ function create_window_controls(on_action, is_maximized) {
       button(
         toList([
           class$(
-            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white "
           ),
           nodrag(),
           on_click(on_action(new Maximize()))
@@ -9874,7 +9885,7 @@ function create_window_controls(on_action, is_maximized) {
       button(
         toList([
           class$(
-            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white "
           ),
           nodrag(),
           on_click(on_action(new Close()))
@@ -9926,7 +9937,7 @@ function create_window(config) {
           if ($) {
             return "select-none";
           } else {
-            return "cursor-move select-none touch-draggable";
+            return "select-none touch-draggable";
           }
         })()
       ),
@@ -10368,7 +10379,7 @@ var Maximized = class extends CustomType {
 var Closed = class extends CustomType {
 };
 var Model7 = class extends CustomType {
-  constructor(email_window2, skull_window2, homer_window2, header_window2, about_window2, libraries_window2, sites_window2, dancing_window2, transform3, z_index_counter, window_z_indexes, window_states) {
+  constructor(email_window2, skull_window2, homer_window2, header_window2, about_window2, libraries_window2, sites_window2, dancing_window2, transform3, z_index_counter, window_z_indexes, window_states, start_menu_visible, current_time, timer_id) {
     super();
     this.email_window = email_window2;
     this.skull_window = skull_window2;
@@ -10382,6 +10393,9 @@ var Model7 = class extends CustomType {
     this.z_index_counter = z_index_counter;
     this.window_z_indexes = window_z_indexes;
     this.window_states = window_states;
+    this.start_menu_visible = start_menu_visible;
+    this.current_time = current_time;
+    this.timer_id = timer_id;
   }
 };
 var EmailWindowDragged = class extends CustomType {
@@ -10494,12 +10508,202 @@ var RestoreWindow = class extends CustomType {
     this[0] = $0;
   }
 };
+var ToggleStartMenu = class extends CustomType {
+};
+var UpdateTime = class extends CustomType {
+};
 var ViewportPanned = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
   }
 };
+function format_time() {
+  let now2 = now();
+  let hours2 = hours(now2);
+  let minutes2 = minutes(now2);
+  let _block;
+  let $ = hours2 >= 12;
+  if ($) {
+    _block = "PM";
+  } else {
+    _block = "AM";
+  }
+  let period = _block;
+  let _block$1;
+  if (hours2 === 0) {
+    _block$1 = 12;
+  } else {
+    let h = hours2;
+    if (h > 12) {
+      _block$1 = h - 12;
+    } else {
+      _block$1 = hours2;
+    }
+  }
+  let display_hours = _block$1;
+  let _block$2;
+  let $1 = minutes2 < 10;
+  if ($1) {
+    _block$2 = "0" + (() => {
+      if (minutes2 === 0) {
+        return "0";
+      } else if (minutes2 === 1) {
+        return "1";
+      } else if (minutes2 === 2) {
+        return "2";
+      } else if (minutes2 === 3) {
+        return "3";
+      } else if (minutes2 === 4) {
+        return "4";
+      } else if (minutes2 === 5) {
+        return "5";
+      } else if (minutes2 === 6) {
+        return "6";
+      } else if (minutes2 === 7) {
+        return "7";
+      } else if (minutes2 === 8) {
+        return "8";
+      } else if (minutes2 === 9) {
+        return "9";
+      } else {
+        return "0";
+      }
+    })();
+  } else {
+    if (minutes2 === 10) {
+      _block$2 = "10";
+    } else if (minutes2 === 11) {
+      _block$2 = "11";
+    } else if (minutes2 === 12) {
+      _block$2 = "12";
+    } else if (minutes2 === 13) {
+      _block$2 = "13";
+    } else if (minutes2 === 14) {
+      _block$2 = "14";
+    } else if (minutes2 === 15) {
+      _block$2 = "15";
+    } else if (minutes2 === 16) {
+      _block$2 = "16";
+    } else if (minutes2 === 17) {
+      _block$2 = "17";
+    } else if (minutes2 === 18) {
+      _block$2 = "18";
+    } else if (minutes2 === 19) {
+      _block$2 = "19";
+    } else if (minutes2 === 20) {
+      _block$2 = "20";
+    } else if (minutes2 === 21) {
+      _block$2 = "21";
+    } else if (minutes2 === 22) {
+      _block$2 = "22";
+    } else if (minutes2 === 23) {
+      _block$2 = "23";
+    } else if (minutes2 === 24) {
+      _block$2 = "24";
+    } else if (minutes2 === 25) {
+      _block$2 = "25";
+    } else if (minutes2 === 26) {
+      _block$2 = "26";
+    } else if (minutes2 === 27) {
+      _block$2 = "27";
+    } else if (minutes2 === 28) {
+      _block$2 = "28";
+    } else if (minutes2 === 29) {
+      _block$2 = "29";
+    } else if (minutes2 === 30) {
+      _block$2 = "30";
+    } else if (minutes2 === 31) {
+      _block$2 = "31";
+    } else if (minutes2 === 32) {
+      _block$2 = "32";
+    } else if (minutes2 === 33) {
+      _block$2 = "33";
+    } else if (minutes2 === 34) {
+      _block$2 = "34";
+    } else if (minutes2 === 35) {
+      _block$2 = "35";
+    } else if (minutes2 === 36) {
+      _block$2 = "36";
+    } else if (minutes2 === 37) {
+      _block$2 = "37";
+    } else if (minutes2 === 38) {
+      _block$2 = "38";
+    } else if (minutes2 === 39) {
+      _block$2 = "39";
+    } else if (minutes2 === 40) {
+      _block$2 = "40";
+    } else if (minutes2 === 41) {
+      _block$2 = "41";
+    } else if (minutes2 === 42) {
+      _block$2 = "42";
+    } else if (minutes2 === 43) {
+      _block$2 = "43";
+    } else if (minutes2 === 44) {
+      _block$2 = "44";
+    } else if (minutes2 === 45) {
+      _block$2 = "45";
+    } else if (minutes2 === 46) {
+      _block$2 = "46";
+    } else if (minutes2 === 47) {
+      _block$2 = "47";
+    } else if (minutes2 === 48) {
+      _block$2 = "48";
+    } else if (minutes2 === 49) {
+      _block$2 = "49";
+    } else if (minutes2 === 50) {
+      _block$2 = "50";
+    } else if (minutes2 === 51) {
+      _block$2 = "51";
+    } else if (minutes2 === 52) {
+      _block$2 = "52";
+    } else if (minutes2 === 53) {
+      _block$2 = "53";
+    } else if (minutes2 === 54) {
+      _block$2 = "54";
+    } else if (minutes2 === 55) {
+      _block$2 = "55";
+    } else if (minutes2 === 56) {
+      _block$2 = "56";
+    } else if (minutes2 === 57) {
+      _block$2 = "57";
+    } else if (minutes2 === 58) {
+      _block$2 = "58";
+    } else if (minutes2 === 59) {
+      _block$2 = "59";
+    } else {
+      _block$2 = "00";
+    }
+  }
+  let formatted_minutes = _block$2;
+  if (display_hours === 1) {
+    return "1:" + formatted_minutes + " " + period;
+  } else if (display_hours === 2) {
+    return "2:" + formatted_minutes + " " + period;
+  } else if (display_hours === 3) {
+    return "3:" + formatted_minutes + " " + period;
+  } else if (display_hours === 4) {
+    return "4:" + formatted_minutes + " " + period;
+  } else if (display_hours === 5) {
+    return "5:" + formatted_minutes + " " + period;
+  } else if (display_hours === 6) {
+    return "6:" + formatted_minutes + " " + period;
+  } else if (display_hours === 7) {
+    return "7:" + formatted_minutes + " " + period;
+  } else if (display_hours === 8) {
+    return "8:" + formatted_minutes + " " + period;
+  } else if (display_hours === 9) {
+    return "9:" + formatted_minutes + " " + period;
+  } else if (display_hours === 10) {
+    return "10:" + formatted_minutes + " " + period;
+  } else if (display_hours === 11) {
+    return "11:" + formatted_minutes + " " + period;
+  } else if (display_hours === 12) {
+    return "12:" + formatted_minutes + " " + period;
+  } else {
+    return "12:" + formatted_minutes + " " + period;
+  }
+}
 function init9(_) {
   return new Model7(
     new WindowPosition(1200, 120),
@@ -10522,7 +10726,10 @@ function init9(_) {
       new Visible(),
       new Visible(),
       new Visible()
-    ]
+    ],
+    false,
+    format_time(),
+    new None()
   );
 }
 function update10(model, msg) {
@@ -10566,7 +10773,10 @@ function update10(model, msg) {
         homer_z,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof SkullWindowDragged) {
     let x = msg.x;
@@ -10608,7 +10818,10 @@ function update10(model, msg) {
         homer_z,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof HeaderWindowDragged) {
     let x = msg.x;
@@ -10650,7 +10863,10 @@ function update10(model, msg) {
         homer_z,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof AboutWindowDragged) {
     let x = msg.x;
@@ -10692,7 +10908,10 @@ function update10(model, msg) {
         homer_z,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof LibrariesWindowDragged) {
     let x = msg.x;
@@ -10734,7 +10953,10 @@ function update10(model, msg) {
         homer_z,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof SitesWindowDragged) {
     let x = msg.x;
@@ -10776,7 +10998,10 @@ function update10(model, msg) {
         homer_z,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof HomerWindowDragged) {
     let x = msg.x;
@@ -10818,7 +11043,10 @@ function update10(model, msg) {
         new_z_index,
         dancing_z
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof DancingWindowDragged) {
     let x = msg.x;
@@ -10860,7 +11088,10 @@ function update10(model, msg) {
         homer_z,
         new_z_index
       ],
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof EmailWindowAction) {
     let $ = msg[0];
@@ -10901,7 +11132,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -10949,7 +11183,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -10988,7 +11225,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof SkullWindowAction) {
@@ -11030,7 +11270,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11078,7 +11321,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11117,7 +11363,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof HeaderWindowAction) {
@@ -11159,7 +11408,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11207,7 +11459,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11246,7 +11501,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof AboutWindowAction) {
@@ -11288,7 +11546,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11336,7 +11597,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11375,7 +11639,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof LibrariesWindowAction) {
@@ -11417,7 +11684,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11465,7 +11735,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11504,7 +11777,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof SitesWindowAction) {
@@ -11546,7 +11822,10 @@ function update10(model, msg) {
           new Minimized(),
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11594,7 +11873,10 @@ function update10(model, msg) {
           new_state,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11633,7 +11915,10 @@ function update10(model, msg) {
           new Closed(),
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof HomerWindowAction) {
@@ -11675,7 +11960,10 @@ function update10(model, msg) {
           sites_s,
           new Minimized(),
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11723,7 +12011,10 @@ function update10(model, msg) {
           sites_s,
           new_state,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11762,7 +12053,10 @@ function update10(model, msg) {
           sites_s,
           new Closed(),
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof DancingWindowAction) {
@@ -11804,7 +12098,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           new Minimized()
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if ($ instanceof Maximize) {
       let $1 = model.window_states;
@@ -11852,7 +12149,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           new_state
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
       let $1 = model.window_states;
@@ -11891,7 +12191,10 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           new Closed()
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     }
   } else if (msg instanceof RestoreWindow) {
@@ -11913,8 +12216,9 @@ function update10(model, msg) {
     sites_s = $[5];
     homer_s = $[6];
     dancing_s = $[7];
+    let _block;
     if (window_id === "email") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -11935,10 +12239,13 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "skull") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -11959,10 +12266,13 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "header") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -11983,10 +12293,13 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "about") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -12007,10 +12320,13 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "libraries") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -12031,10 +12347,13 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "sites") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -12055,10 +12374,13 @@ function update10(model, msg) {
           new Visible(),
           homer_s,
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "homer") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -12079,10 +12401,13 @@ function update10(model, msg) {
           sites_s,
           new Visible(),
           dancing_s
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else if (window_id === "dancing") {
-      return new Model7(
+      _block = new Model7(
         model.email_window,
         model.skull_window,
         model.homer_window,
@@ -12103,11 +12428,68 @@ function update10(model, msg) {
           sites_s,
           homer_s,
           new Visible()
-        ]
+        ],
+        model.start_menu_visible,
+        model.current_time,
+        model.timer_id
       );
     } else {
-      return model;
+      _block = model;
     }
+    let updated_model = _block;
+    return new Model7(
+      updated_model.email_window,
+      updated_model.skull_window,
+      updated_model.homer_window,
+      updated_model.header_window,
+      updated_model.about_window,
+      updated_model.libraries_window,
+      updated_model.sites_window,
+      updated_model.dancing_window,
+      updated_model.transform,
+      updated_model.z_index_counter,
+      updated_model.window_z_indexes,
+      updated_model.window_states,
+      false,
+      updated_model.current_time,
+      updated_model.timer_id
+    );
+  } else if (msg instanceof ToggleStartMenu) {
+    return new Model7(
+      model.email_window,
+      model.skull_window,
+      model.homer_window,
+      model.header_window,
+      model.about_window,
+      model.libraries_window,
+      model.sites_window,
+      model.dancing_window,
+      model.transform,
+      model.z_index_counter,
+      model.window_z_indexes,
+      model.window_states,
+      !model.start_menu_visible,
+      model.current_time,
+      model.timer_id
+    );
+  } else if (msg instanceof UpdateTime) {
+    return new Model7(
+      model.email_window,
+      model.skull_window,
+      model.homer_window,
+      model.header_window,
+      model.about_window,
+      model.libraries_window,
+      model.sites_window,
+      model.dancing_window,
+      model.transform,
+      model.z_index_counter,
+      model.window_z_indexes,
+      model.window_states,
+      model.start_menu_visible,
+      format_time(),
+      model.timer_id
+    );
   } else {
     let transform3 = msg[0];
     return new Model7(
@@ -12122,7 +12504,10 @@ function update10(model, msg) {
       transform3,
       model.z_index_counter,
       model.window_z_indexes,
-      model.window_states
+      model.window_states,
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   }
 }
@@ -12227,6 +12612,106 @@ function get_minimized_windows(window_states) {
   let windows$7 = _block$6;
   let _block$7;
   if (dancing_state instanceof Minimized) {
+    _block$7 = prepend(
+      create_taskbar_button("dancing.gif", "\u{1F483}", "dancing"),
+      windows$7
+    );
+  } else {
+    _block$7 = windows$7;
+  }
+  let windows$8 = _block$7;
+  return windows$8;
+}
+function get_closed_windows(window_states) {
+  let email_state;
+  let skull_state;
+  let header_state;
+  let about_state;
+  let libraries_state;
+  let sites_state;
+  let homer_state;
+  let dancing_state;
+  email_state = window_states[0];
+  skull_state = window_states[1];
+  header_state = window_states[2];
+  about_state = window_states[3];
+  libraries_state = window_states[4];
+  sites_state = window_states[5];
+  homer_state = window_states[6];
+  dancing_state = window_states[7];
+  let windows = toList([]);
+  let _block;
+  if (email_state instanceof Closed) {
+    _block = prepend(
+      create_taskbar_button("email.gif", "\u{1F4E7}", "email"),
+      windows
+    );
+  } else {
+    _block = windows;
+  }
+  let windows$1 = _block;
+  let _block$1;
+  if (skull_state instanceof Closed) {
+    _block$1 = prepend(
+      create_taskbar_button("skull.gif", "\u{1F480}", "skull"),
+      windows$1
+    );
+  } else {
+    _block$1 = windows$1;
+  }
+  let windows$2 = _block$1;
+  let _block$2;
+  if (header_state instanceof Closed) {
+    _block$2 = prepend(
+      create_taskbar_button("Portfolio", "R", "header"),
+      windows$2
+    );
+  } else {
+    _block$2 = windows$2;
+  }
+  let windows$3 = _block$2;
+  let _block$3;
+  if (about_state instanceof Closed) {
+    _block$3 = prepend(
+      create_taskbar_button("About Me", "?", "about"),
+      windows$3
+    );
+  } else {
+    _block$3 = windows$3;
+  }
+  let windows$4 = _block$3;
+  let _block$4;
+  if (libraries_state instanceof Closed) {
+    _block$4 = prepend(
+      create_taskbar_button("Libraries", "\u{1F4C1}", "libraries"),
+      windows$4
+    );
+  } else {
+    _block$4 = windows$4;
+  }
+  let windows$5 = _block$4;
+  let _block$5;
+  if (sites_state instanceof Closed) {
+    _block$5 = prepend(
+      create_taskbar_button("Sites", "\u{1F310}", "sites"),
+      windows$5
+    );
+  } else {
+    _block$5 = windows$5;
+  }
+  let windows$6 = _block$5;
+  let _block$6;
+  if (homer_state instanceof Closed) {
+    _block$6 = prepend(
+      create_taskbar_button("homer.gif", "\u{1F3B5}", "homer"),
+      windows$6
+    );
+  } else {
+    _block$6 = windows$6;
+  }
+  let windows$7 = _block$6;
+  let _block$7;
+  if (dancing_state instanceof Closed) {
     _block$7 = prepend(
       create_taskbar_button("dancing.gif", "\u{1F483}", "dancing"),
       windows$7
@@ -12475,6 +12960,34 @@ function view7(model) {
               )
             ])
           ),
+          (() => {
+            let $ = model.start_menu_visible;
+            if ($) {
+              return div(
+                toList([
+                  class$(
+                    "fixed bottom-12 left-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto"
+                  )
+                ]),
+                toList([
+                  div(
+                    toList([
+                      class$(
+                        "p-2 border-b border-[#808080] bg-gradient-to-r from-[#000080] to-[#0000ff] text-white text-sm font-bold"
+                      )
+                    ]),
+                    toList([text2("Closed Applications")])
+                  ),
+                  div(
+                    toList([class$("p-1")]),
+                    get_closed_windows(model.window_states)
+                  )
+                ])
+              );
+            } else {
+              return div(toList([]), toList([]));
+            }
+          })(),
           div(
             toList([
               class$(
@@ -12485,11 +12998,12 @@ function view7(model) {
               div(
                 toList([class$("flex items-center gap-2")]),
                 prepend(
-                  div(
+                  button(
                     toList([
                       class$(
-                        "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm"
-                      )
+                        "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm hover:bg-[#009000] active:border-t-[#404040] active:border-l-[#404040] active:border-r-white active:border-b-white"
+                      ),
+                      on_click(new ToggleStartMenu())
                     ]),
                     toList([
                       span(toList([class$("text-lg")]), toList([text2("\u{1F7E2}")])),
@@ -12514,7 +13028,7 @@ function view7(model) {
                     "bg-[#008080] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] px-2 py-1 text-white text-xs font-bold"
                   )
                 ]),
-                toList([text2("12:00 AM")])
+                toList([text2(model.current_time)])
               )
             ])
           )
@@ -12530,10 +13044,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      13,
+      16,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 399, end: 435, pattern_start: 410, pattern_end: 415 }
+      { value: $, start: 507, end: 543, pattern_start: 518, pattern_end: 523 }
     );
   }
   initializeTouchSupport();
@@ -12544,10 +13058,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      16,
+      19,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1, start: 519, end: 568, pattern_start: 530, pattern_end: 535 }
+      { value: $1, start: 627, end: 676, pattern_start: 638, pattern_end: 643 }
     );
   }
   return void 0;

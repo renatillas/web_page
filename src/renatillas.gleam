@@ -1,11 +1,14 @@
 import clique
 import clique/background
 import clique/transform.{type Transform}
+import gleam/option.{type Option, None, Some}
 import lustre
 import lustre/attribute.{class, href, rel}
 import lustre/element.{text}
 import lustre/element/html.{body, button, div, head, html, link, p, span, title}
 import lustre/event
+import plinth/javascript/date
+import plinth/javascript/global
 import renatillas/touch
 import renatillas/window.{type WindowAction, type WindowPosition, WindowPosition}
 
@@ -39,6 +42,9 @@ pub type Model {
     z_index_counter: Int,
     window_z_indexes: #(Int, Int, Int, Int, Int, Int, Int, Int),
     window_states: #(WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState),
+    start_menu_visible: Bool,
+    current_time: String,
+    timer_id: Option(global.TimerID),
   )
 }
 
@@ -61,7 +67,107 @@ pub type Msg {
   HomerWindowAction(WindowAction)
   DancingWindowAction(WindowAction)
   RestoreWindow(String)
+  ToggleStartMenu
+  UpdateTime
   ViewportPanned(Transform)
+}
+
+fn format_time() -> String {
+  let now = date.now()
+  let hours = date.hours(now)
+  let minutes = date.minutes(now)
+  let period = case hours >= 12 {
+    True -> "PM"
+    False -> "AM"
+  }
+  let display_hours = case hours {
+    0 -> 12
+    h if h > 12 -> h - 12
+    h -> h
+  }
+  let formatted_minutes = case minutes < 10 {
+    True -> "0" <> case minutes {
+      0 -> "0"
+      1 -> "1"
+      2 -> "2"
+      3 -> "3"
+      4 -> "4"
+      5 -> "5"
+      6 -> "6"
+      7 -> "7"
+      8 -> "8"
+      9 -> "9"
+      _ -> "0"
+    }
+    False -> case minutes {
+      10 -> "10"
+      11 -> "11"
+      12 -> "12"
+      13 -> "13"
+      14 -> "14"
+      15 -> "15"
+      16 -> "16"
+      17 -> "17"
+      18 -> "18"
+      19 -> "19"
+      20 -> "20"
+      21 -> "21"
+      22 -> "22"
+      23 -> "23"
+      24 -> "24"
+      25 -> "25"
+      26 -> "26"
+      27 -> "27"
+      28 -> "28"
+      29 -> "29"
+      30 -> "30"
+      31 -> "31"
+      32 -> "32"
+      33 -> "33"
+      34 -> "34"
+      35 -> "35"
+      36 -> "36"
+      37 -> "37"
+      38 -> "38"
+      39 -> "39"
+      40 -> "40"
+      41 -> "41"
+      42 -> "42"
+      43 -> "43"
+      44 -> "44"
+      45 -> "45"
+      46 -> "46"
+      47 -> "47"
+      48 -> "48"
+      49 -> "49"
+      50 -> "50"
+      51 -> "51"
+      52 -> "52"
+      53 -> "53"
+      54 -> "54"
+      55 -> "55"
+      56 -> "56"
+      57 -> "57"
+      58 -> "58"
+      59 -> "59"
+      _ -> "00"
+    }
+  }
+  case display_hours {
+    1 -> "1:" <> formatted_minutes <> " " <> period
+    2 -> "2:" <> formatted_minutes <> " " <> period
+    3 -> "3:" <> formatted_minutes <> " " <> period
+    4 -> "4:" <> formatted_minutes <> " " <> period
+    5 -> "5:" <> formatted_minutes <> " " <> period
+    6 -> "6:" <> formatted_minutes <> " " <> period
+    7 -> "7:" <> formatted_minutes <> " " <> period
+    8 -> "8:" <> formatted_minutes <> " " <> period
+    9 -> "9:" <> formatted_minutes <> " " <> period
+    10 -> "10:" <> formatted_minutes <> " " <> period
+    11 -> "11:" <> formatted_minutes <> " " <> period
+    12 -> "12:" <> formatted_minutes <> " " <> period
+    _ -> "12:" <> formatted_minutes <> " " <> period
+  }
 }
 
 fn init(_flags) -> Model {
@@ -78,6 +184,9 @@ fn init(_flags) -> Model {
     z_index_counter: 8,
     window_z_indexes: #(1, 2, 3, 4, 5, 6, 7, 8),
     window_states: #(Visible, Visible, Visible, Visible, Visible, Visible, Visible, Visible),
+    start_menu_visible: False,
+    current_time: format_time(),
+    timer_id: None,
   )
 }
 
@@ -432,7 +541,7 @@ fn update(model: Model, msg: Msg) -> Model {
     }
     RestoreWindow(window_id) -> {
       let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
-      case window_id {
+      let updated_model = case window_id {
         "email" -> Model(..model, window_states: #(Visible, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
         "skull" -> Model(..model, window_states: #(email_s, Visible, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
         "header" -> Model(..model, window_states: #(email_s, skull_s, Visible, about_s, libraries_s, sites_s, homer_s, dancing_s))
@@ -443,6 +552,13 @@ fn update(model: Model, msg: Msg) -> Model {
         "dancing" -> Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, Visible))
         _ -> model
       }
+      Model(..updated_model, start_menu_visible: False)
+    }
+    ToggleStartMenu -> {
+      Model(..model, start_menu_visible: !model.start_menu_visible)
+    }
+    UpdateTime -> {
+      Model(..model, current_time: format_time())
     }
   }
 }
@@ -500,6 +616,53 @@ fn get_minimized_windows(window_states: #(WindowState, WindowState, WindowState,
   
   let windows = case dancing_state {
     Minimized -> [create_taskbar_button("dancing.gif", "💃", "dancing"), ..windows]
+    _ -> windows
+  }
+  
+  windows
+}
+
+fn get_closed_windows(window_states: #(WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState)) -> List(element.Element(Msg)) {
+  let #(email_state, skull_state, header_state, about_state, libraries_state, sites_state, homer_state, dancing_state) = window_states
+  let windows = []
+  
+  let windows = case email_state {
+    Closed -> [create_taskbar_button("email.gif", "📧", "email"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case skull_state {
+    Closed -> [create_taskbar_button("skull.gif", "💀", "skull"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case header_state {
+    Closed -> [create_taskbar_button("Portfolio", "R", "header"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case about_state {
+    Closed -> [create_taskbar_button("About Me", "?", "about"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case libraries_state {
+    Closed -> [create_taskbar_button("Libraries", "📁", "libraries"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case sites_state {
+    Closed -> [create_taskbar_button("Sites", "🌐", "sites"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case homer_state {
+    Closed -> [create_taskbar_button("homer.gif", "🎵", "homer"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case dancing_state {
+    Closed -> [create_taskbar_button("dancing.gif", "💃", "dancing"), ..windows]
     _ -> windows
   }
   
@@ -659,6 +822,23 @@ fn view(model: Model) -> element.Element(Msg) {
             ),
           ],
         ),
+        // Start menu dropdown
+        case model.start_menu_visible {
+          True -> div(
+            [
+              class(
+                "fixed bottom-12 left-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto",
+              ),
+            ],
+            [
+              div([class("p-2 border-b border-[#808080] bg-gradient-to-r from-[#000080] to-[#0000ff] text-white text-sm font-bold")], [
+                text("Closed Applications"),
+              ]),
+              div([class("p-1")], get_closed_windows(model.window_states)),
+            ],
+          )
+          False -> div([], [])
+        },
         // Simple footer taskbar - remove all the static content above this
         div(
           [
@@ -669,11 +849,12 @@ fn view(model: Model) -> element.Element(Msg) {
           [
             div([class("flex items-center gap-2")], 
               [
-                div(
+                button(
                   [
                     class(
-                      "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm",
+                      "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm hover:bg-[#009000] active:border-t-[#404040] active:border-l-[#404040] active:border-r-white active:border-b-white",
                     ),
+                    event.on_click(ToggleStartMenu),
                   ],
                   [span([class("text-lg")], [text("🟢")]), text("Start")],
                 ),
@@ -691,7 +872,7 @@ fn view(model: Model) -> element.Element(Msg) {
                   "bg-[#008080] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] px-2 py-1 text-white text-xs font-bold",
                 ),
               ],
-              [text("12:00 AM")],
+              [text(model.current_time)],
             ),
           ],
         ),
