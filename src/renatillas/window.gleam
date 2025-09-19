@@ -126,7 +126,7 @@ fn create_window_controls(
     button(
       [
         class(
-          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
+          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
         ),
         node.nodrag(),
         event.on_click(on_action(Minimize)),
@@ -136,7 +136,7 @@ fn create_window_controls(
     button(
       [
         class(
-          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
+          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
         ),
         node.nodrag(),
         event.on_click(on_action(Maximize)),
@@ -151,7 +151,7 @@ fn create_window_controls(
     button(
       [
         class(
-          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
+          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
         ),
         node.nodrag(),
         event.on_click(on_action(Close)),
