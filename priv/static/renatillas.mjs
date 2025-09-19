@@ -361,6 +361,16 @@ function structurallyCompatibleObjects(a2, b) {
   if (nonstructural.some((c) => a2 instanceof c)) return false;
   return a2.constructor === b.constructor;
 }
+function remainderInt(a2, b) {
+  if (b === 0) {
+    return 0;
+  } else {
+    return a2 % b;
+  }
+}
+function divideInt(a2, b) {
+  return Math.trunc(divideFloat(a2, b));
+}
 function divideFloat(a2, b) {
   if (b === 0) {
     return 0;
@@ -1121,6 +1131,25 @@ function absolute_value(x) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function slice(string5, idx, len) {
+  let $ = len <= 0;
+  if ($) {
+    return "";
+  } else {
+    let $1 = idx < 0;
+    if ($1) {
+      let translated_idx = string_length(string5) + idx;
+      let $2 = translated_idx < 0;
+      if ($2) {
+        return "";
+      } else {
+        return string_slice(string5, translated_idx, len);
+      }
+    } else {
+      return string_slice(string5, idx, len);
+    }
+  }
+}
 function concat_loop(loop$strings, loop$accumulator) {
   while (true) {
     let strings = loop$strings;
@@ -1137,6 +1166,54 @@ function concat_loop(loop$strings, loop$accumulator) {
 }
 function concat2(strings) {
   return concat_loop(strings, "");
+}
+function repeat_loop(loop$times, loop$doubling_acc, loop$acc) {
+  while (true) {
+    let times = loop$times;
+    let doubling_acc = loop$doubling_acc;
+    let acc = loop$acc;
+    let _block;
+    let $ = times % 2;
+    if ($ === 0) {
+      _block = acc;
+    } else {
+      _block = acc + doubling_acc;
+    }
+    let acc$1 = _block;
+    let times$1 = globalThis.Math.trunc(times / 2);
+    let $1 = times$1 <= 0;
+    if ($1) {
+      return acc$1;
+    } else {
+      loop$times = times$1;
+      loop$doubling_acc = doubling_acc + doubling_acc;
+      loop$acc = acc$1;
+    }
+  }
+}
+function repeat(string5, times) {
+  let $ = times <= 0;
+  if ($) {
+    return "";
+  } else {
+    return repeat_loop(times, string5, "");
+  }
+}
+function padding(size2, pad_string) {
+  let pad_string_length = string_length(pad_string);
+  let num_pads = divideInt(size2, pad_string_length);
+  let extra = remainderInt(size2, pad_string_length);
+  return repeat(pad_string, num_pads) + slice(pad_string, 0, extra);
+}
+function pad_start(string5, desired_length, pad_string) {
+  let current_length = string_length(string5);
+  let to_pad_length = desired_length - current_length;
+  let $ = to_pad_length <= 0;
+  if ($) {
+    return string5;
+  } else {
+    return padding(to_pad_length, pad_string) + string5;
+  }
 }
 function trim(string5) {
   let _pipe = string5;
@@ -1508,6 +1585,21 @@ function parse_float(value) {
 function to_string(term) {
   return term.toString();
 }
+function string_length(string5) {
+  if (string5 === "") {
+    return 0;
+  }
+  const iterator = graphemes_iterator(string5);
+  if (iterator) {
+    let i = 0;
+    for (const _ of iterator) {
+      i++;
+    }
+    return i;
+  } else {
+    return string5.match(/./gsu).length;
+  }
+}
 function graphemes(string5) {
   const iterator = graphemes_iterator(string5);
   if (iterator) {
@@ -1525,6 +1617,28 @@ function graphemes_iterator(string5) {
 }
 function split(xs, pattern3) {
   return List.fromArray(xs.split(pattern3));
+}
+function string_slice(string5, idx, len) {
+  if (len <= 0 || idx >= string5.length) {
+    return "";
+  }
+  const iterator = graphemes_iterator(string5);
+  if (iterator) {
+    while (idx-- > 0) {
+      iterator.next();
+    }
+    let result = "";
+    while (len-- > 0) {
+      const v = iterator.next().value;
+      if (v === void 0) {
+        break;
+      }
+      result += v.segment;
+    }
+    return result;
+  } else {
+    return string5.match(/./gsu).slice(idx, idx + len).join("");
+  }
 }
 function starts_with(haystack, needle) {
   return haystack.startsWith(needle);
@@ -1771,6 +1885,33 @@ function contains(loop$list, loop$elem) {
     }
   }
 }
+function filter_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return reverse(acc);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let _block;
+      let $ = fun(first$1);
+      if ($) {
+        _block = prepend(first$1, acc);
+      } else {
+        _block = acc;
+      }
+      let new_acc = _block;
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = new_acc;
+    }
+  }
+}
+function filter(list4, predicate) {
+  return filter_loop(list4, predicate, toList([]));
+}
 function filter_map_loop(loop$list, loop$fun, loop$acc) {
   while (true) {
     let list4 = loop$list;
@@ -1851,6 +1992,25 @@ function fold2(loop$list, loop$initial, loop$fun) {
       loop$list = rest$1;
       loop$initial = fun(initial, first$1);
       loop$fun = fun;
+    }
+  }
+}
+function find2(loop$list, loop$is_desired) {
+  while (true) {
+    let list4 = loop$list;
+    let is_desired = loop$is_desired;
+    if (list4 instanceof Empty) {
+      return new Error(void 0);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let $ = is_desired(first$1);
+      if ($) {
+        return new Ok(first$1);
+      } else {
+        loop$list = rest$1;
+        loop$is_desired = is_desired;
+      }
     }
   }
 }
@@ -9826,16 +9986,48 @@ var Maximize = class extends CustomType {
 };
 var Close = class extends CustomType {
 };
+var Window = class extends CustomType {
+  constructor(name2, state, position2) {
+    super();
+    this.name = name2;
+    this.state = state;
+    this.position = position2;
+  }
+};
+var Email = class extends CustomType {
+};
+var Skull = class extends CustomType {
+};
+var Header = class extends CustomType {
+};
+var About = class extends CustomType {
+};
+var Libraries = class extends CustomType {
+};
+var Sites = class extends CustomType {
+};
+var Homer = class extends CustomType {
+};
+var Dancing = class extends CustomType {
+};
+var Visible = class extends CustomType {
+};
+var Minimized = class extends CustomType {
+};
+var Maximized = class extends CustomType {
+};
+var Closed = class extends CustomType {
+};
 var WindowConfig = class extends CustomType {
-  constructor(id2, title2, icon, position2, z_index, on_drag2, on_action, content, width, is_maximized) {
+  constructor(id2, title2, icon, position2, on_drag2, on_action, on_click2, content, width, is_maximized) {
     super();
     this.id = id2;
     this.title = title2;
     this.icon = icon;
     this.position = position2;
-    this.z_index = z_index;
     this.on_drag = on_drag2;
     this.on_action = on_action;
+    this.on_click = on_click2;
     this.content = content;
     this.width = width;
     this.is_maximized = is_maximized;
@@ -9940,8 +10132,7 @@ function create_window(config) {
             return "select-none touch-draggable";
           }
         })()
-      ),
-      style("z-index", to_string(config.z_index))
+      )
     ]),
     toList([
       div(
@@ -9955,7 +10146,8 @@ function create_window(config) {
                 return "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] " + config.width;
               }
             })()
-          )
+          ),
+          on_click(config.on_click())
         ]),
         toList([
           div(
@@ -9998,242 +10190,168 @@ function create_window(config) {
     ])
   );
 }
-function email_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  return create_window(
-    new WindowConfig(
-      "email-window",
-      "email.gif - Paint",
-      "\u{1F4E7}",
-      [position2.x, position2.y],
-      z_index,
-      on_drag2,
-      on_action,
+function email_content() {
+  return div(
+    toList([
+      class$(
+        "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+      )
+    ]),
+    toList([
+      img(
+        toList([
+          src("/priv/static/email.gif"),
+          alt("Email animation"),
+          class$("w-24 h-24 pixelated")
+        ])
+      )
+    ])
+  );
+}
+function dancing_content() {
+  return div(
+    toList([
+      class$(
+        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+      )
+    ]),
+    toList([
+      img(
+        toList([
+          src("/priv/static/dancing.gif"),
+          alt("Dancing animation"),
+          class$("w-24 h-24 pixelated")
+        ])
+      )
+    ])
+  );
+}
+function homer_content() {
+  return div(
+    toList([
+      class$(
+        "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1"
+      )
+    ]),
+    toList([
+      img(
+        toList([
+          src("/priv/static/homer.gif"),
+          alt("Homer Simpson"),
+          class$("pixelated bg-white")
+        ])
+      )
+    ])
+  );
+}
+function skull_content() {
+  return div(
+    toList([
+      class$(
+        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+      )
+    ]),
+    toList([
+      img(
+        toList([
+          src("/priv/static/skull.gif"),
+          alt("Skull animation"),
+          class$("w-20 h-20 pixelated")
+        ])
+      )
+    ])
+  );
+}
+function header_content() {
+  return div(
+    toList([
+      class$(
+        "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
+      )
+    ]),
+    toList([
+      h1(
+        toList([class$("text-4xl font-bold text-[#000080] mb-2")]),
+        toList([text3("RENATA AMUTIO")])
+      ),
+      p(
+        toList([class$("text-lg text-black")]),
+        toList([text3("GLEAM DEVELOPER \u2022 FUNCTIONAL PROGRAMMING ENTHUSIAST")])
+      ),
       div(
         toList([
           class$(
-            "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+            "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]"
           )
         ]),
         toList([
-          img(
+          div(
+            toList([class$("text-center")]),
             toList([
-              src("/priv/static/email.gif"),
-              alt("Email animation"),
-              class$("w-24 h-24 pixelated")
+              span(
+                toList([class$("text-2xl font-bold text-[#0000ff] block")]),
+                toList([text3("17+")])
+              ),
+              span(
+                toList([class$("text-xs text-black font-bold")]),
+                toList([text3("LIBRARIES")])
+              )
+            ])
+          ),
+          div(
+            toList([class$("text-center")]),
+            toList([
+              span(
+                toList([class$("text-2xl font-bold text-[#0000ff] block")]),
+                toList([text3("2")])
+              ),
+              span(
+                toList([class$("text-xs text-black font-bold")]),
+                toList([text3("PROD SITES")])
+              )
+            ])
+          ),
+          div(
+            toList([class$("text-center")]),
+            toList([
+              span(
+                toList([class$("text-2xl font-bold text-[#0000ff] block")]),
+                toList([text3("100%")])
+              ),
+              span(
+                toList([class$("text-xs text-black font-bold")]),
+                toList([text3("GLEAM")])
+              )
             ])
           )
         ])
-      ),
-      "",
-      is_maximized
-    )
+      )
+    ])
   );
 }
-function dancing_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  return create_window(
-    new WindowConfig(
-      "dancing-window",
-      "dancing.gif - Media Player",
-      "\u{1F483}",
-      [position2.x, position2.y],
-      z_index,
-      on_drag2,
-      on_action,
+function about_content() {
+  return div(
+    toList([
+      class$(
+        "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start"
+      )
+    ]),
+    toList([
       div(
+        toList([class$("flex-1")]),
         toList([
-          class$(
-            "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
-          )
-        ]),
-        toList([
-          img(
+          p(
+            toList([class$("text-black leading-relaxed text-sm")]),
             toList([
-              src("/priv/static/dancing.gif"),
-              alt("Dancing animation"),
-              class$("w-24 h-24 pixelated")
+              text3(
+                "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love."
+              )
             ])
           )
         ])
-      ),
-      "",
-      is_maximized
-    )
+      )
+    ])
   );
-}
-function homer_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  let _pipe = new WindowConfig(
-    "homer-window",
-    "homer.gif - Media Player",
-    "\u{1F3B5}",
-    [position2.x, position2.y],
-    z_index,
-    on_drag2,
-    on_action,
-    div(
-      toList([
-        class$(
-          "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1"
-        )
-      ]),
-      toList([
-        img(
-          toList([
-            src("/priv/static/homer.gif"),
-            alt("Homer Simpson"),
-            class$("pixelated bg-white")
-          ])
-        )
-      ])
-    ),
-    "",
-    is_maximized
-  );
-  return create_window(_pipe);
-}
-function skull_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  let _pipe = new WindowConfig(
-    "skull-window",
-    "skull.gif - Media Player",
-    "\u{1F480}",
-    [position2.x, position2.y],
-    z_index,
-    on_drag2,
-    on_action,
-    div(
-      toList([
-        class$(
-          "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
-        )
-      ]),
-      toList([
-        img(
-          toList([
-            src("/priv/static/skull.gif"),
-            alt("Skull animation"),
-            class$("w-20 h-20 pixelated")
-          ])
-        )
-      ])
-    ),
-    "",
-    is_maximized
-  );
-  return create_window(_pipe);
-}
-function header_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  let _pipe = new WindowConfig(
-    "header-window",
-    "Renata Amutio - Portfolio",
-    "R",
-    [position2.x, position2.y],
-    z_index,
-    on_drag2,
-    on_action,
-    div(
-      toList([
-        class$(
-          "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
-        )
-      ]),
-      toList([
-        h1(
-          toList([class$("text-4xl font-bold text-[#000080] mb-2")]),
-          toList([text3("RENATA AMUTIO")])
-        ),
-        p(
-          toList([class$("text-lg text-black")]),
-          toList([text3("GLEAM DEVELOPER \u2022 FUNCTIONAL PROGRAMMING ENTHUSIAST")])
-        ),
-        div(
-          toList([
-            class$(
-              "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]"
-            )
-          ]),
-          toList([
-            div(
-              toList([class$("text-center")]),
-              toList([
-                span(
-                  toList([class$("text-2xl font-bold text-[#0000ff] block")]),
-                  toList([text3("17+")])
-                ),
-                span(
-                  toList([class$("text-xs text-black font-bold")]),
-                  toList([text3("LIBRARIES")])
-                )
-              ])
-            ),
-            div(
-              toList([class$("text-center")]),
-              toList([
-                span(
-                  toList([class$("text-2xl font-bold text-[#0000ff] block")]),
-                  toList([text3("2")])
-                ),
-                span(
-                  toList([class$("text-xs text-black font-bold")]),
-                  toList([text3("PROD SITES")])
-                )
-              ])
-            ),
-            div(
-              toList([class$("text-center")]),
-              toList([
-                span(
-                  toList([class$("text-2xl font-bold text-[#0000ff] block")]),
-                  toList([text3("100%")])
-                ),
-                span(
-                  toList([class$("text-xs text-black font-bold")]),
-                  toList([text3("GLEAM")])
-                )
-              ])
-            )
-          ])
-        )
-      ])
-    ),
-    "",
-    is_maximized
-  );
-  return create_window(_pipe);
-}
-function about_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  let _pipe = new WindowConfig(
-    "about-window",
-    "About Me - Properties",
-    "?",
-    [position2.x, position2.y],
-    z_index,
-    on_drag2,
-    on_action,
-    div(
-      toList([
-        class$(
-          "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start"
-        )
-      ]),
-      toList([
-        div(
-          toList([class$("flex-1")]),
-          toList([
-            p(
-              toList([class$("text-black leading-relaxed text-sm")]),
-              toList([
-                text3(
-                  "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love."
-                )
-              ])
-            )
-          ])
-        )
-      ])
-    ),
-    "",
-    is_maximized
-  );
-  return create_window(_pipe);
 }
 function libraries_content() {
   return div(
@@ -10268,21 +10386,6 @@ function libraries_content() {
       )
     ])
   );
-}
-function libraries_window(position2, z_index, on_drag2, on_action, is_maximized) {
-  let _pipe = new WindowConfig(
-    "libraries-window",
-    "My Libraries - Folder",
-    "\u{1F4C1}",
-    [position2.x, position2.y],
-    z_index,
-    on_drag2,
-    on_action,
-    libraries_content(),
-    "",
-    is_maximized
-  );
-  return create_window(_pipe);
 }
 function sites_content() {
   return div(
@@ -10352,154 +10455,108 @@ function sites_content() {
     ])
   );
 }
-function sites_window(position2, z_index, on_drag2, on_action, is_maximized) {
+function name_to_string(name2) {
+  if (name2 instanceof Email) {
+    return "email";
+  } else if (name2 instanceof Skull) {
+    return "skull";
+  } else if (name2 instanceof Header) {
+    return "portfolio";
+  } else if (name2 instanceof About) {
+    return "about-me";
+  } else if (name2 instanceof Libraries) {
+    return "libraries";
+  } else if (name2 instanceof Sites) {
+    return "sites";
+  } else if (name2 instanceof Homer) {
+    return "homer";
+  } else {
+    return "dancing";
+  }
+}
+function name_to_title(name2) {
+  if (name2 instanceof Email) {
+    return "email.gif - Paint";
+  } else if (name2 instanceof Skull) {
+    return "skull.gif - Media Player";
+  } else if (name2 instanceof Header) {
+    return "Renata Amutio - Portfolio";
+  } else if (name2 instanceof About) {
+    return "About Me - Properties";
+  } else if (name2 instanceof Libraries) {
+    return "My Libraries - Folder";
+  } else if (name2 instanceof Sites) {
+    return "My Sites - Folder";
+  } else if (name2 instanceof Homer) {
+    return "homer.gif - Media Player";
+  } else {
+    return "dancing.gif - Media Player";
+  }
+}
+function name_to_icon(name2) {
+  if (name2 instanceof Email) {
+    return "\u{1F4E7}";
+  } else if (name2 instanceof Skull) {
+    return "\u{1F480}";
+  } else if (name2 instanceof Header) {
+    return "R";
+  } else if (name2 instanceof About) {
+    return "?";
+  } else if (name2 instanceof Libraries) {
+    return "\u{1F4C1}";
+  } else if (name2 instanceof Sites) {
+    return "\u{1F310}";
+  } else if (name2 instanceof Homer) {
+    return "\u{1F3B5}";
+  } else {
+    return "\u{1F483}";
+  }
+}
+function create_window_with_content(window2, on_drag2, on_action, on_click2, content) {
   let _pipe = new WindowConfig(
-    "sites-window",
-    "Production Sites - Folder",
-    "\u{1F310}",
-    [position2.x, position2.y],
-    z_index,
+    name_to_string(window2.name),
+    name_to_title(window2.name),
+    name_to_icon(window2.name),
+    [window2.position.x, window2.position.y],
     on_drag2,
     on_action,
-    sites_content(),
+    on_click2,
+    content,
     "",
-    is_maximized
+    isEqual(window2.state, new Maximized())
   );
   return create_window(_pipe);
 }
 
 // build/dev/javascript/renatillas/renatillas.mjs
 var FILEPATH = "src/renatillas.gleam";
-var Visible = class extends CustomType {
-};
-var Minimized = class extends CustomType {
-};
-var Maximized = class extends CustomType {
-};
-var Closed = class extends CustomType {
-};
 var Model7 = class extends CustomType {
-  constructor(email_window2, skull_window2, homer_window2, header_window2, about_window2, libraries_window2, sites_window2, dancing_window2, transform3, z_index_counter, window_z_indexes, window_states, start_menu_visible, current_time, timer_id) {
+  constructor(transform3, window_states, start_menu_visible, current_time, timer_id) {
     super();
-    this.email_window = email_window2;
-    this.skull_window = skull_window2;
-    this.homer_window = homer_window2;
-    this.header_window = header_window2;
-    this.about_window = about_window2;
-    this.libraries_window = libraries_window2;
-    this.sites_window = sites_window2;
-    this.dancing_window = dancing_window2;
     this.transform = transform3;
-    this.z_index_counter = z_index_counter;
-    this.window_z_indexes = window_z_indexes;
     this.window_states = window_states;
     this.start_menu_visible = start_menu_visible;
     this.current_time = current_time;
     this.timer_id = timer_id;
   }
 };
-var EmailWindowDragged = class extends CustomType {
-  constructor(x, y) {
+var UserDraggedWindow = class extends CustomType {
+  constructor(window2) {
     super();
-    this.x = x;
-    this.y = y;
+    this.window = window2;
   }
 };
-var SkullWindowDragged = class extends CustomType {
-  constructor(x, y) {
+var UserActivatedWindowControl = class extends CustomType {
+  constructor(name2, action) {
     super();
-    this.x = x;
-    this.y = y;
+    this.name = name2;
+    this.action = action;
   }
 };
-var HeaderWindowDragged = class extends CustomType {
-  constructor(x, y) {
+var UserClickedWindow = class extends CustomType {
+  constructor(name2) {
     super();
-    this.x = x;
-    this.y = y;
-  }
-};
-var AboutWindowDragged = class extends CustomType {
-  constructor(x, y) {
-    super();
-    this.x = x;
-    this.y = y;
-  }
-};
-var LibrariesWindowDragged = class extends CustomType {
-  constructor(x, y) {
-    super();
-    this.x = x;
-    this.y = y;
-  }
-};
-var SitesWindowDragged = class extends CustomType {
-  constructor(x, y) {
-    super();
-    this.x = x;
-    this.y = y;
-  }
-};
-var HomerWindowDragged = class extends CustomType {
-  constructor(x, y) {
-    super();
-    this.x = x;
-    this.y = y;
-  }
-};
-var DancingWindowDragged = class extends CustomType {
-  constructor(x, y) {
-    super();
-    this.x = x;
-    this.y = y;
-  }
-};
-var EmailWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var SkullWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var HeaderWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var AboutWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var LibrariesWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var SitesWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var HomerWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var DancingWindowAction = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
+    this.name = name2;
   }
 };
 var RestoreWindow = class extends CustomType {
@@ -10521,1952 +10578,256 @@ var ViewportPanned = class extends CustomType {
 function format_time() {
   let now2 = now();
   let hours2 = hours(now2);
-  let minutes2 = minutes(now2);
   let _block;
-  let $ = hours2 >= 12;
-  if ($) {
-    _block = "PM";
-  } else {
-    _block = "AM";
-  }
-  let period = _block;
-  let _block$1;
-  if (hours2 === 0) {
-    _block$1 = 12;
-  } else {
-    let h = hours2;
-    if (h > 12) {
-      _block$1 = h - 12;
-    } else {
-      _block$1 = hours2;
-    }
-  }
-  let display_hours = _block$1;
-  let _block$2;
-  let $1 = minutes2 < 10;
-  if ($1) {
-    _block$2 = "0" + (() => {
-      if (minutes2 === 0) {
-        return "0";
-      } else if (minutes2 === 1) {
-        return "1";
-      } else if (minutes2 === 2) {
-        return "2";
-      } else if (minutes2 === 3) {
-        return "3";
-      } else if (minutes2 === 4) {
-        return "4";
-      } else if (minutes2 === 5) {
-        return "5";
-      } else if (minutes2 === 6) {
-        return "6";
-      } else if (minutes2 === 7) {
-        return "7";
-      } else if (minutes2 === 8) {
-        return "8";
-      } else if (minutes2 === 9) {
-        return "9";
-      } else {
-        return "0";
-      }
-    })();
-  } else {
-    if (minutes2 === 10) {
-      _block$2 = "10";
-    } else if (minutes2 === 11) {
-      _block$2 = "11";
-    } else if (minutes2 === 12) {
-      _block$2 = "12";
-    } else if (minutes2 === 13) {
-      _block$2 = "13";
-    } else if (minutes2 === 14) {
-      _block$2 = "14";
-    } else if (minutes2 === 15) {
-      _block$2 = "15";
-    } else if (minutes2 === 16) {
-      _block$2 = "16";
-    } else if (minutes2 === 17) {
-      _block$2 = "17";
-    } else if (minutes2 === 18) {
-      _block$2 = "18";
-    } else if (minutes2 === 19) {
-      _block$2 = "19";
-    } else if (minutes2 === 20) {
-      _block$2 = "20";
-    } else if (minutes2 === 21) {
-      _block$2 = "21";
-    } else if (minutes2 === 22) {
-      _block$2 = "22";
-    } else if (minutes2 === 23) {
-      _block$2 = "23";
-    } else if (minutes2 === 24) {
-      _block$2 = "24";
-    } else if (minutes2 === 25) {
-      _block$2 = "25";
-    } else if (minutes2 === 26) {
-      _block$2 = "26";
-    } else if (minutes2 === 27) {
-      _block$2 = "27";
-    } else if (minutes2 === 28) {
-      _block$2 = "28";
-    } else if (minutes2 === 29) {
-      _block$2 = "29";
-    } else if (minutes2 === 30) {
-      _block$2 = "30";
-    } else if (minutes2 === 31) {
-      _block$2 = "31";
-    } else if (minutes2 === 32) {
-      _block$2 = "32";
-    } else if (minutes2 === 33) {
-      _block$2 = "33";
-    } else if (minutes2 === 34) {
-      _block$2 = "34";
-    } else if (minutes2 === 35) {
-      _block$2 = "35";
-    } else if (minutes2 === 36) {
-      _block$2 = "36";
-    } else if (minutes2 === 37) {
-      _block$2 = "37";
-    } else if (minutes2 === 38) {
-      _block$2 = "38";
-    } else if (minutes2 === 39) {
-      _block$2 = "39";
-    } else if (minutes2 === 40) {
-      _block$2 = "40";
-    } else if (minutes2 === 41) {
-      _block$2 = "41";
-    } else if (minutes2 === 42) {
-      _block$2 = "42";
-    } else if (minutes2 === 43) {
-      _block$2 = "43";
-    } else if (minutes2 === 44) {
-      _block$2 = "44";
-    } else if (minutes2 === 45) {
-      _block$2 = "45";
-    } else if (minutes2 === 46) {
-      _block$2 = "46";
-    } else if (minutes2 === 47) {
-      _block$2 = "47";
-    } else if (minutes2 === 48) {
-      _block$2 = "48";
-    } else if (minutes2 === 49) {
-      _block$2 = "49";
-    } else if (minutes2 === 50) {
-      _block$2 = "50";
-    } else if (minutes2 === 51) {
-      _block$2 = "51";
-    } else if (minutes2 === 52) {
-      _block$2 = "52";
-    } else if (minutes2 === 53) {
-      _block$2 = "53";
-    } else if (minutes2 === 54) {
-      _block$2 = "54";
-    } else if (minutes2 === 55) {
-      _block$2 = "55";
-    } else if (minutes2 === 56) {
-      _block$2 = "56";
-    } else if (minutes2 === 57) {
-      _block$2 = "57";
-    } else if (minutes2 === 58) {
-      _block$2 = "58";
-    } else if (minutes2 === 59) {
-      _block$2 = "59";
-    } else {
-      _block$2 = "00";
-    }
-  }
-  let formatted_minutes = _block$2;
-  if (display_hours === 1) {
-    return "1:" + formatted_minutes + " " + period;
-  } else if (display_hours === 2) {
-    return "2:" + formatted_minutes + " " + period;
-  } else if (display_hours === 3) {
-    return "3:" + formatted_minutes + " " + period;
-  } else if (display_hours === 4) {
-    return "4:" + formatted_minutes + " " + period;
-  } else if (display_hours === 5) {
-    return "5:" + formatted_minutes + " " + period;
-  } else if (display_hours === 6) {
-    return "6:" + formatted_minutes + " " + period;
-  } else if (display_hours === 7) {
-    return "7:" + formatted_minutes + " " + period;
-  } else if (display_hours === 8) {
-    return "8:" + formatted_minutes + " " + period;
-  } else if (display_hours === 9) {
-    return "9:" + formatted_minutes + " " + period;
-  } else if (display_hours === 10) {
-    return "10:" + formatted_minutes + " " + period;
-  } else if (display_hours === 11) {
-    return "11:" + formatted_minutes + " " + period;
-  } else if (display_hours === 12) {
-    return "12:" + formatted_minutes + " " + period;
-  } else {
-    return "12:" + formatted_minutes + " " + period;
-  }
+  let _pipe = minutes(now2);
+  let _pipe$1 = to_string(_pipe);
+  _block = pad_start(_pipe$1, 2, "0");
+  let minutes2 = _block;
+  return (() => {
+    let _pipe$2 = hours2;
+    return to_string(_pipe$2);
+  })() + ":" + minutes2;
 }
 function init9(_) {
   return new Model7(
-    new WindowPosition(1200, 120),
-    new WindowPosition(1100, 10),
-    new WindowPosition(600, 250),
-    new WindowPosition(-10, 20),
-    new WindowPosition(10, 320),
-    new WindowPosition(0, 530),
-    new WindowPosition(450, 0),
-    new WindowPosition(1200, 400),
     [0, 0, 0.8],
-    8,
-    [1, 2, 3, 4, 5, 6, 7, 8],
-    [
-      new Visible(),
-      new Visible(),
-      new Visible(),
-      new Visible(),
-      new Visible(),
-      new Visible(),
-      new Visible(),
-      new Visible()
-    ],
+    toList([
+      new Window(new Skull(), new Visible(), new WindowPosition(1100, 10)),
+      new Window(new Email(), new Visible(), new WindowPosition(1200, 120)),
+      new Window(new About(), new Visible(), new WindowPosition(10, 320)),
+      new Window(new Libraries(), new Visible(), new WindowPosition(0, 530)),
+      new Window(new Sites(), new Visible(), new WindowPosition(450, 0)),
+      new Window(new Homer(), new Visible(), new WindowPosition(600, 250)),
+      new Window(
+        new Dancing(),
+        new Visible(),
+        new WindowPosition(1200, 400)
+      ),
+      new Window(new Header(), new Visible(), new WindowPosition(300, 150))
+    ]),
     false,
     format_time(),
     new None()
   );
 }
 function update10(model, msg) {
-  if (msg instanceof EmailWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let skull_z;
-    let header_z;
-    let about_z;
-    let libraries_z;
-    let sites_z;
-    let homer_z;
-    let dancing_z;
-    skull_z = $[1];
-    header_z = $[2];
-    about_z = $[3];
-    libraries_z = $[4];
-    sites_z = $[5];
-    homer_z = $[6];
-    dancing_z = $[7];
-    return new Model7(
-      new WindowPosition(x, y),
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        new_z_index,
-        skull_z,
-        header_z,
-        about_z,
-        libraries_z,
-        sites_z,
-        homer_z,
-        dancing_z
-      ],
+  if (msg instanceof UserDraggedWindow) {
+    let name2 = msg.window.name;
+    let state = msg.window.state;
+    let position2 = msg.window.position;
+    let new_window = new Window(name2, state, position2);
+    let old_windows = filter(
       model.window_states,
+      (w) => {
+        return !isEqual(w.name, name2);
+      }
+    );
+    return new Model7(
+      model.transform,
+      prepend(new_window, old_windows),
       model.start_menu_visible,
       model.current_time,
       model.timer_id
     );
-  } else if (msg instanceof SkullWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let header_z;
-    let about_z;
-    let libraries_z;
-    let sites_z;
-    let homer_z;
-    let dancing_z;
-    email_z = $[0];
-    header_z = $[2];
-    about_z = $[3];
-    libraries_z = $[4];
-    sites_z = $[5];
-    homer_z = $[6];
-    dancing_z = $[7];
-    return new Model7(
-      model.email_window,
-      new WindowPosition(x, y),
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        new_z_index,
-        header_z,
-        about_z,
-        libraries_z,
-        sites_z,
-        homer_z,
-        dancing_z
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof HeaderWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let skull_z;
-    let about_z;
-    let libraries_z;
-    let sites_z;
-    let homer_z;
-    let dancing_z;
-    email_z = $[0];
-    skull_z = $[1];
-    about_z = $[3];
-    libraries_z = $[4];
-    sites_z = $[5];
-    homer_z = $[6];
-    dancing_z = $[7];
-    return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      new WindowPosition(x, y),
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        skull_z,
-        new_z_index,
-        about_z,
-        libraries_z,
-        sites_z,
-        homer_z,
-        dancing_z
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof AboutWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let skull_z;
-    let header_z;
-    let libraries_z;
-    let sites_z;
-    let homer_z;
-    let dancing_z;
-    email_z = $[0];
-    skull_z = $[1];
-    header_z = $[2];
-    libraries_z = $[4];
-    sites_z = $[5];
-    homer_z = $[6];
-    dancing_z = $[7];
-    return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      new WindowPosition(x, y),
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        skull_z,
-        header_z,
-        new_z_index,
-        libraries_z,
-        sites_z,
-        homer_z,
-        dancing_z
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof LibrariesWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let skull_z;
-    let header_z;
-    let about_z;
-    let sites_z;
-    let homer_z;
-    let dancing_z;
-    email_z = $[0];
-    skull_z = $[1];
-    header_z = $[2];
-    about_z = $[3];
-    sites_z = $[5];
-    homer_z = $[6];
-    dancing_z = $[7];
-    return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      new WindowPosition(x, y),
-      model.sites_window,
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        skull_z,
-        header_z,
-        about_z,
-        new_z_index,
-        sites_z,
-        homer_z,
-        dancing_z
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof SitesWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let skull_z;
-    let header_z;
-    let about_z;
-    let libraries_z;
-    let homer_z;
-    let dancing_z;
-    email_z = $[0];
-    skull_z = $[1];
-    header_z = $[2];
-    about_z = $[3];
-    libraries_z = $[4];
-    homer_z = $[6];
-    dancing_z = $[7];
-    return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      new WindowPosition(x, y),
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        skull_z,
-        header_z,
-        about_z,
-        libraries_z,
-        new_z_index,
-        homer_z,
-        dancing_z
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof HomerWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let skull_z;
-    let header_z;
-    let about_z;
-    let libraries_z;
-    let sites_z;
-    let dancing_z;
-    email_z = $[0];
-    skull_z = $[1];
-    header_z = $[2];
-    about_z = $[3];
-    libraries_z = $[4];
-    sites_z = $[5];
-    dancing_z = $[7];
-    return new Model7(
-      model.email_window,
-      model.skull_window,
-      new WindowPosition(x, y),
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        skull_z,
-        header_z,
-        about_z,
-        libraries_z,
-        sites_z,
-        new_z_index,
-        dancing_z
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof DancingWindowDragged) {
-    let x = msg.x;
-    let y = msg.y;
-    let new_z_index = model.z_index_counter + 1;
-    let $ = model.window_z_indexes;
-    let email_z;
-    let skull_z;
-    let header_z;
-    let about_z;
-    let libraries_z;
-    let sites_z;
-    let homer_z;
-    email_z = $[0];
-    skull_z = $[1];
-    header_z = $[2];
-    about_z = $[3];
-    libraries_z = $[4];
-    sites_z = $[5];
-    homer_z = $[6];
-    return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      new WindowPosition(x, y),
-      model.transform,
-      new_z_index,
-      [
-        email_z,
-        skull_z,
-        header_z,
-        about_z,
-        libraries_z,
-        sites_z,
-        homer_z,
-        new_z_index
-      ],
-      model.window_states,
-      model.start_menu_visible,
-      model.current_time,
-      model.timer_id
-    );
-  } else if (msg instanceof EmailWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
+  } else if (msg instanceof UserActivatedWindowControl) {
+    let name2 = msg.name;
+    let action = msg.action;
+    if (action instanceof Minimize) {
+      let $ = find2(
+        model.window_states,
+        (w) => {
+          return isEqual(w.name, name2);
+        }
+      );
+      let old_window;
+      if ($ instanceof Ok) {
+        old_window = $[0];
+      } else {
+        throw makeError(
+          "let_assert",
+          FILEPATH,
+          "renatillas",
+          99,
+          "update",
+          "Pattern match failed, no pattern matched the value.",
+          {
+            value: $,
+            start: 3077,
+            end: 3173,
+            pattern_start: 3088,
+            pattern_end: 3102
+          }
+        );
+      }
+      let new_window = new Window(name2, new Minimized(), old_window.position);
+      let old_windows = filter(
+        model.window_states,
+        (w) => {
+          return !isEqual(w.name, name2);
+        }
+      );
       return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
         model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          new Minimized(),
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
+        prepend(new_window, old_windows),
         model.start_menu_visible,
         model.current_time,
         model.timer_id
       );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (email_s instanceof Maximized) {
-        _block = new Visible();
+    } else if (action instanceof Maximize) {
+      let $ = find2(
+        model.window_states,
+        (w) => {
+          return isEqual(w.name, name2);
+        }
+      );
+      let old_window;
+      if ($ instanceof Ok) {
+        old_window = $[0];
       } else {
-        _block = new Maximized();
+        throw makeError(
+          "let_assert",
+          FILEPATH,
+          "renatillas",
+          107,
+          "update",
+          "Pattern match failed, no pattern matched the value.",
+          {
+            value: $,
+            start: 3463,
+            end: 3559,
+            pattern_start: 3474,
+            pattern_end: 3488
+          }
+        );
       }
-      let new_state = _block;
+      let new_window = new Window(
+        name2,
+        (() => {
+          let $1 = old_window.state;
+          if ($1 instanceof Maximized) {
+            return new Visible();
+          } else {
+            return new Maximized();
+          }
+        })(),
+        old_window.position
+      );
+      let old_windows = filter(
+        model.window_states,
+        (w) => {
+          return !isEqual(w.name, name2);
+        }
+      );
       return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
         model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          new_state,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
+        prepend(new_window, old_windows),
         model.start_menu_visible,
         model.current_time,
         model.timer_id
       );
     } else {
-      let $1 = model.window_states;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          new Closed(),
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
+      let $ = find2(
+        model.window_states,
+        (w) => {
+          return isEqual(w.name, name2);
+        }
       );
-    }
-  } else if (msg instanceof SkullWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          new Minimized(),
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (skull_s instanceof Maximized) {
-        _block = new Visible();
+      let old_window;
+      if ($ instanceof Ok) {
+        old_window = $[0];
       } else {
-        _block = new Maximized();
+        throw makeError(
+          "let_assert",
+          FILEPATH,
+          "renatillas",
+          123,
+          "update",
+          "Pattern match failed, no pattern matched the value.",
+          {
+            value: $,
+            start: 4013,
+            end: 4109,
+            pattern_start: 4024,
+            pattern_end: 4038
+          }
+        );
       }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          new_state,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
+      let new_window = new Window(name2, new Closed(), old_window.position);
+      let old_windows = filter(
+        model.window_states,
+        (w) => {
+          return !isEqual(w.name, name2);
+        }
       );
-    } else {
-      let $1 = model.window_states;
-      let email_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
       return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
         model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          new Closed(),
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
+        prepend(new_window, old_windows),
         model.start_menu_visible,
         model.current_time,
         model.timer_id
       );
     }
-  } else if (msg instanceof HeaderWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          new Minimized(),
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (header_s instanceof Maximized) {
-        _block = new Visible();
-      } else {
-        _block = new Maximized();
+  } else if (msg instanceof UserClickedWindow) {
+    let name2 = msg.name;
+    let $ = find2(
+      model.window_states,
+      (w) => {
+        return isEqual(w.name, name2);
       }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          new_state,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
+    );
+    let clicked_window;
+    if ($ instanceof Ok) {
+      clicked_window = $[0];
     } else {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          new Closed(),
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
+      throw makeError(
+        "let_assert",
+        FILEPATH,
+        "renatillas",
+        90,
+        "update",
+        "Pattern match failed, no pattern matched the value.",
+        {
+          value: $,
+          start: 2701,
+          end: 2797,
+          pattern_start: 2712,
+          pattern_end: 2730
+        }
       );
     }
-  } else if (msg instanceof AboutWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          new Minimized(),
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (about_s instanceof Maximized) {
-        _block = new Visible();
-      } else {
-        _block = new Maximized();
+    let other_windows = filter(
+      model.window_states,
+      (w) => {
+        return !isEqual(w.name, name2);
       }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          new_state,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          new Closed(),
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    }
-  } else if (msg instanceof LibrariesWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          new Minimized(),
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (libraries_s instanceof Maximized) {
-        _block = new Visible();
-      } else {
-        _block = new Maximized();
-      }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          new_state,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          new Closed(),
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    }
-  } else if (msg instanceof SitesWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          new Minimized(),
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (sites_s instanceof Maximized) {
-        _block = new Visible();
-      } else {
-        _block = new Maximized();
-      }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          new_state,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          new Closed(),
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    }
-  } else if (msg instanceof HomerWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          new Minimized(),
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (homer_s instanceof Maximized) {
-        _block = new Visible();
-      } else {
-        _block = new Maximized();
-      }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          new_state,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      dancing_s = $1[7];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          new Closed(),
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    }
-  } else if (msg instanceof DancingWindowAction) {
-    let $ = msg[0];
-    if ($ instanceof Minimize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          new Minimized()
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if ($ instanceof Maximize) {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      let dancing_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      dancing_s = $1[7];
-      let _block;
-      if (dancing_s instanceof Maximized) {
-        _block = new Visible();
-      } else {
-        _block = new Maximized();
-      }
-      let new_state = _block;
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          new_state
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else {
-      let $1 = model.window_states;
-      let email_s;
-      let skull_s;
-      let header_s;
-      let about_s;
-      let libraries_s;
-      let sites_s;
-      let homer_s;
-      email_s = $1[0];
-      skull_s = $1[1];
-      header_s = $1[2];
-      about_s = $1[3];
-      libraries_s = $1[4];
-      sites_s = $1[5];
-      homer_s = $1[6];
-      return new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          new Closed()
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    }
+    );
+    return new Model7(
+      model.transform,
+      prepend(clicked_window, other_windows),
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
+    );
   } else if (msg instanceof RestoreWindow) {
-    let window_id = msg[0];
-    let $ = model.window_states;
-    let email_s;
-    let skull_s;
-    let header_s;
-    let about_s;
-    let libraries_s;
-    let sites_s;
-    let homer_s;
-    let dancing_s;
-    email_s = $[0];
-    skull_s = $[1];
-    header_s = $[2];
-    about_s = $[3];
-    libraries_s = $[4];
-    sites_s = $[5];
-    homer_s = $[6];
-    dancing_s = $[7];
-    let _block;
-    if (window_id === "email") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          new Visible(),
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "skull") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          new Visible(),
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "header") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          new Visible(),
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "about") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          new Visible(),
-          libraries_s,
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "libraries") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          new Visible(),
-          sites_s,
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "sites") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          new Visible(),
-          homer_s,
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "homer") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          new Visible(),
-          dancing_s
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else if (window_id === "dancing") {
-      _block = new Model7(
-        model.email_window,
-        model.skull_window,
-        model.homer_window,
-        model.header_window,
-        model.about_window,
-        model.libraries_window,
-        model.sites_window,
-        model.dancing_window,
-        model.transform,
-        model.z_index_counter,
-        model.window_z_indexes,
-        [
-          email_s,
-          skull_s,
-          header_s,
-          about_s,
-          libraries_s,
-          sites_s,
-          homer_s,
-          new Visible()
-        ],
-        model.start_menu_visible,
-        model.current_time,
-        model.timer_id
-      );
-    } else {
-      _block = model;
-    }
-    let updated_model = _block;
+    let name2 = msg[0].name;
+    let position2 = msg[0].position;
+    let new_window = new Window(name2, new Visible(), position2);
+    let old_windows = filter(
+      model.window_states,
+      (w) => {
+        return !isEqual(w.name, name2);
+      }
+    );
     return new Model7(
-      updated_model.email_window,
-      updated_model.skull_window,
-      updated_model.homer_window,
-      updated_model.header_window,
-      updated_model.about_window,
-      updated_model.libraries_window,
-      updated_model.sites_window,
-      updated_model.dancing_window,
-      updated_model.transform,
-      updated_model.z_index_counter,
-      updated_model.window_z_indexes,
-      updated_model.window_states,
-      false,
-      updated_model.current_time,
-      updated_model.timer_id
+      model.transform,
+      prepend(new_window, old_windows),
+      model.start_menu_visible,
+      model.current_time,
+      model.timer_id
     );
   } else if (msg instanceof ToggleStartMenu) {
     return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
       model.transform,
-      model.z_index_counter,
-      model.window_z_indexes,
       model.window_states,
       !model.start_menu_visible,
       model.current_time,
@@ -12474,17 +10835,7 @@ function update10(model, msg) {
     );
   } else if (msg instanceof UpdateTime) {
     return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
       model.transform,
-      model.z_index_counter,
-      model.window_z_indexes,
       model.window_states,
       model.start_menu_visible,
       format_time(),
@@ -12493,17 +10844,7 @@ function update10(model, msg) {
   } else {
     let transform3 = msg[0];
     return new Model7(
-      model.email_window,
-      model.skull_window,
-      model.homer_window,
-      model.header_window,
-      model.about_window,
-      model.libraries_window,
-      model.sites_window,
-      model.dancing_window,
       transform3,
-      model.z_index_counter,
-      model.window_z_indexes,
       model.window_states,
       model.start_menu_visible,
       model.current_time,
@@ -12511,216 +10852,145 @@ function update10(model, msg) {
     );
   }
 }
-function create_taskbar_button(title2, icon, window_id) {
+function create_window_element(window2) {
+  let $ = window2.state;
+  if ($ instanceof Minimized) {
+    return ["", div(toList([]), toList([]))];
+  } else if ($ instanceof Closed) {
+    return ["", div(toList([]), toList([]))];
+  } else {
+    let name2 = window2.name;
+    let state = $;
+    return [
+      name_to_string(name2),
+      create_window_with_content(
+        window2,
+        (x, y) => {
+          return new UserDraggedWindow(
+            new Window(name2, state, new WindowPosition(x, y))
+          );
+        },
+        (action) => {
+          return new UserActivatedWindowControl(name2, action);
+        },
+        () => {
+          return new UserClickedWindow(name2);
+        },
+        (() => {
+          if (name2 instanceof Email) {
+            return email_content();
+          } else if (name2 instanceof Skull) {
+            return skull_content();
+          } else if (name2 instanceof Header) {
+            return header_content();
+          } else if (name2 instanceof About) {
+            return about_content();
+          } else if (name2 instanceof Libraries) {
+            return libraries_content();
+          } else if (name2 instanceof Sites) {
+            return sites_content();
+          } else if (name2 instanceof Homer) {
+            return homer_content();
+          } else {
+            return dancing_content();
+          }
+        })()
+      )
+    ];
+  }
+}
+function create_taskbar_button(title2, icon, window2) {
   return button(
     toList([
       class$(
         "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-2 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white max-w-32 truncate"
       ),
-      on_click(new RestoreWindow(window_id))
+      on_click(new RestoreWindow(window2))
     ]),
     toList([span(toList([class$("mr-1")]), toList([text2(icon)])), text2(title2)])
   );
 }
-function get_minimized_windows(window_states) {
-  let email_state;
-  let skull_state;
-  let header_state;
-  let about_state;
-  let libraries_state;
-  let sites_state;
-  let homer_state;
-  let dancing_state;
-  email_state = window_states[0];
-  skull_state = window_states[1];
-  header_state = window_states[2];
-  about_state = window_states[3];
-  libraries_state = window_states[4];
-  sites_state = window_states[5];
-  homer_state = window_states[6];
-  dancing_state = window_states[7];
-  let windows = toList([]);
-  let _block;
-  if (email_state instanceof Minimized) {
-    _block = prepend(
-      create_taskbar_button("email.gif", "\u{1F4E7}", "email"),
-      windows
-    );
-  } else {
-    _block = windows;
-  }
-  let windows$1 = _block;
-  let _block$1;
-  if (skull_state instanceof Minimized) {
-    _block$1 = prepend(
-      create_taskbar_button("skull.gif", "\u{1F480}", "skull"),
-      windows$1
-    );
-  } else {
-    _block$1 = windows$1;
-  }
-  let windows$2 = _block$1;
-  let _block$2;
-  if (header_state instanceof Minimized) {
-    _block$2 = prepend(
-      create_taskbar_button("Portfolio", "R", "header"),
-      windows$2
-    );
-  } else {
-    _block$2 = windows$2;
-  }
-  let windows$3 = _block$2;
-  let _block$3;
-  if (about_state instanceof Minimized) {
-    _block$3 = prepend(
-      create_taskbar_button("About Me", "?", "about"),
-      windows$3
-    );
-  } else {
-    _block$3 = windows$3;
-  }
-  let windows$4 = _block$3;
-  let _block$4;
-  if (libraries_state instanceof Minimized) {
-    _block$4 = prepend(
-      create_taskbar_button("Libraries", "\u{1F4C1}", "libraries"),
-      windows$4
-    );
-  } else {
-    _block$4 = windows$4;
-  }
-  let windows$5 = _block$4;
-  let _block$5;
-  if (sites_state instanceof Minimized) {
-    _block$5 = prepend(
-      create_taskbar_button("Sites", "\u{1F310}", "sites"),
-      windows$5
-    );
-  } else {
-    _block$5 = windows$5;
-  }
-  let windows$6 = _block$5;
-  let _block$6;
-  if (homer_state instanceof Minimized) {
-    _block$6 = prepend(
-      create_taskbar_button("homer.gif", "\u{1F3B5}", "homer"),
-      windows$6
-    );
-  } else {
-    _block$6 = windows$6;
-  }
-  let windows$7 = _block$6;
-  let _block$7;
-  if (dancing_state instanceof Minimized) {
-    _block$7 = prepend(
-      create_taskbar_button("dancing.gif", "\u{1F483}", "dancing"),
-      windows$7
-    );
-  } else {
-    _block$7 = windows$7;
-  }
-  let windows$8 = _block$7;
-  return windows$8;
-}
 function get_closed_windows(window_states) {
-  let email_state;
-  let skull_state;
-  let header_state;
-  let about_state;
-  let libraries_state;
-  let sites_state;
-  let homer_state;
-  let dancing_state;
-  email_state = window_states[0];
-  skull_state = window_states[1];
-  header_state = window_states[2];
-  about_state = window_states[3];
-  libraries_state = window_states[4];
-  sites_state = window_states[5];
-  homer_state = window_states[6];
-  dancing_state = window_states[7];
-  let windows = toList([]);
-  let _block;
-  if (email_state instanceof Closed) {
-    _block = prepend(
-      create_taskbar_button("email.gif", "\u{1F4E7}", "email"),
-      windows
-    );
-  } else {
-    _block = windows;
-  }
-  let windows$1 = _block;
-  let _block$1;
-  if (skull_state instanceof Closed) {
-    _block$1 = prepend(
-      create_taskbar_button("skull.gif", "\u{1F480}", "skull"),
-      windows$1
-    );
-  } else {
-    _block$1 = windows$1;
-  }
-  let windows$2 = _block$1;
-  let _block$2;
-  if (header_state instanceof Closed) {
-    _block$2 = prepend(
-      create_taskbar_button("Portfolio", "R", "header"),
-      windows$2
-    );
-  } else {
-    _block$2 = windows$2;
-  }
-  let windows$3 = _block$2;
-  let _block$3;
-  if (about_state instanceof Closed) {
-    _block$3 = prepend(
-      create_taskbar_button("About Me", "?", "about"),
-      windows$3
-    );
-  } else {
-    _block$3 = windows$3;
-  }
-  let windows$4 = _block$3;
-  let _block$4;
-  if (libraries_state instanceof Closed) {
-    _block$4 = prepend(
-      create_taskbar_button("Libraries", "\u{1F4C1}", "libraries"),
-      windows$4
-    );
-  } else {
-    _block$4 = windows$4;
-  }
-  let windows$5 = _block$4;
-  let _block$5;
-  if (sites_state instanceof Closed) {
-    _block$5 = prepend(
-      create_taskbar_button("Sites", "\u{1F310}", "sites"),
-      windows$5
-    );
-  } else {
-    _block$5 = windows$5;
-  }
-  let windows$6 = _block$5;
-  let _block$6;
-  if (homer_state instanceof Closed) {
-    _block$6 = prepend(
-      create_taskbar_button("homer.gif", "\u{1F3B5}", "homer"),
-      windows$6
-    );
-  } else {
-    _block$6 = windows$6;
-  }
-  let windows$7 = _block$6;
-  let _block$7;
-  if (dancing_state instanceof Closed) {
-    _block$7 = prepend(
-      create_taskbar_button("dancing.gif", "\u{1F483}", "dancing"),
-      windows$7
-    );
-  } else {
-    _block$7 = windows$7;
-  }
-  let windows$8 = _block$7;
-  return windows$8;
+  let windows = filter(
+    window_states,
+    (w) => {
+      return isEqual(w.state, new Closed());
+    }
+  );
+  return map(
+    windows,
+    (w) => {
+      return create_taskbar_button(
+        name_to_string(w.name),
+        name_to_icon(w.name),
+        w
+      );
+    }
+  );
+}
+function get_minimized_windows(window_states) {
+  let windows = filter(
+    window_states,
+    (w) => {
+      return isEqual(w.state, new Minimized());
+    }
+  );
+  return map(
+    windows,
+    (w) => {
+      return create_taskbar_button(
+        name_to_string(w.name),
+        name_to_icon(w.name),
+        w
+      );
+    }
+  );
+}
+function task_bar(model) {
+  return div(
+    toList([
+      class$(
+        "fixed max-h-12 bottom-0 left-0 right-0 bg-[#c0c0c0] border-t-2 border-t-white p-2 flex items-center justify-between z-50"
+      )
+    ]),
+    toList([
+      div(
+        toList([class$("flex items-center gap-2")]),
+        prepend(
+          button(
+            toList([
+              class$(
+                "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm hover:bg-[#009000] active:border-t-[#404040] active:border-l-[#404040] active:border-r-white active:border-b-white"
+              ),
+              on_click(new ToggleStartMenu())
+            ]),
+            toList([
+              span(toList([class$("text-lg")]), toList([text2("\u{1F7E2}")])),
+              text2("Start")
+            ])
+          ),
+          get_minimized_windows(model.window_states)
+        )
+      ),
+      div(
+        toList([class$("flex-1 text-center")]),
+        toList([
+          p(
+            toList([class$("text-black text-xs font-bold")]),
+            toList([text2("BUILT WITH \u2665 GLEAM")])
+          )
+        ])
+      ),
+      div(
+        toList([
+          class$(
+            "bg-[#008080] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] px-2 py-1 text-white text-xs font-bold"
+          )
+        ]),
+        toList([text2(model.current_time)])
+      )
+    ])
+  );
 }
 function view7(model) {
   return html(
@@ -12768,195 +11038,12 @@ function view7(model) {
                 ])
               ),
               nodes(
-                (() => {
-                  let $ = model.window_states;
-                  let email_state = $[0];
-                  let skull_state = $[1];
-                  let header_state = $[2];
-                  let about_state = $[3];
-                  let libraries_state = $[4];
-                  let sites_state = $[5];
-                  let homer_state = $[6];
-                  let dancing_state = $[7];
-                  return toList([
-                    (() => {
-                      if (email_state instanceof Minimized) {
-                        return ["email-window", div(toList([]), toList([]))];
-                      } else if (email_state instanceof Closed) {
-                        return ["email-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "email-window",
-                          email_window(
-                            model.email_window,
-                            model.window_z_indexes[0],
-                            (var0, var1) => {
-                              return new EmailWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new EmailWindowAction(var0);
-                            },
-                            isEqual(email_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (skull_state instanceof Minimized) {
-                        return ["skull-window", div(toList([]), toList([]))];
-                      } else if (skull_state instanceof Closed) {
-                        return ["skull-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "skull-window",
-                          skull_window(
-                            model.skull_window,
-                            model.window_z_indexes[1],
-                            (var0, var1) => {
-                              return new SkullWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new SkullWindowAction(var0);
-                            },
-                            isEqual(skull_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (header_state instanceof Minimized) {
-                        return ["header-window", div(toList([]), toList([]))];
-                      } else if (header_state instanceof Closed) {
-                        return ["header-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "header-window",
-                          header_window(
-                            model.header_window,
-                            model.window_z_indexes[2],
-                            (var0, var1) => {
-                              return new HeaderWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new HeaderWindowAction(var0);
-                            },
-                            isEqual(header_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (about_state instanceof Minimized) {
-                        return ["about-window", div(toList([]), toList([]))];
-                      } else if (about_state instanceof Closed) {
-                        return ["about-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "about-window",
-                          about_window(
-                            model.about_window,
-                            model.window_z_indexes[3],
-                            (var0, var1) => {
-                              return new AboutWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new AboutWindowAction(var0);
-                            },
-                            isEqual(about_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (libraries_state instanceof Minimized) {
-                        return ["libraries-window", div(toList([]), toList([]))];
-                      } else if (libraries_state instanceof Closed) {
-                        return ["libraries-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "libraries-window",
-                          libraries_window(
-                            model.libraries_window,
-                            model.window_z_indexes[4],
-                            (var0, var1) => {
-                              return new LibrariesWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new LibrariesWindowAction(var0);
-                            },
-                            isEqual(libraries_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (sites_state instanceof Minimized) {
-                        return ["sites-window", div(toList([]), toList([]))];
-                      } else if (sites_state instanceof Closed) {
-                        return ["sites-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "sites-window",
-                          sites_window(
-                            model.sites_window,
-                            model.window_z_indexes[5],
-                            (var0, var1) => {
-                              return new SitesWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new SitesWindowAction(var0);
-                            },
-                            isEqual(sites_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (homer_state instanceof Minimized) {
-                        return ["homer-window", div(toList([]), toList([]))];
-                      } else if (homer_state instanceof Closed) {
-                        return ["homer-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "homer-window",
-                          homer_window(
-                            model.homer_window,
-                            model.window_z_indexes[6],
-                            (var0, var1) => {
-                              return new HomerWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new HomerWindowAction(var0);
-                            },
-                            isEqual(homer_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })(),
-                    (() => {
-                      if (dancing_state instanceof Minimized) {
-                        return ["dancing-window", div(toList([]), toList([]))];
-                      } else if (dancing_state instanceof Closed) {
-                        return ["dancing-window", div(toList([]), toList([]))];
-                      } else {
-                        return [
-                          "dancing-window",
-                          dancing_window(
-                            model.dancing_window,
-                            model.window_z_indexes[7],
-                            (var0, var1) => {
-                              return new DancingWindowDragged(var0, var1);
-                            },
-                            (var0) => {
-                              return new DancingWindowAction(var0);
-                            },
-                            isEqual(dancing_state, new Maximized())
-                          )
-                        ];
-                      }
-                    })()
-                  ]);
-                })()
+                map(
+                  reverse(model.window_states),
+                  (window2) => {
+                    return create_window_element(window2);
+                  }
+                )
               )
             ])
           ),
@@ -12988,50 +11075,7 @@ function view7(model) {
               return div(toList([]), toList([]));
             }
           })(),
-          div(
-            toList([
-              class$(
-                "fixed max-h-12 bottom-0 left-0 right-0 bg-[#c0c0c0] border-t-2 border-t-white p-2 flex items-center justify-between z-50"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                prepend(
-                  button(
-                    toList([
-                      class$(
-                        "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm hover:bg-[#009000] active:border-t-[#404040] active:border-l-[#404040] active:border-r-white active:border-b-white"
-                      ),
-                      on_click(new ToggleStartMenu())
-                    ]),
-                    toList([
-                      span(toList([class$("text-lg")]), toList([text2("\u{1F7E2}")])),
-                      text2("Start")
-                    ])
-                  ),
-                  get_minimized_windows(model.window_states)
-                )
-              ),
-              div(
-                toList([class$("flex-1 text-center")]),
-                toList([
-                  p(
-                    toList([class$("text-black text-xs font-bold")]),
-                    toList([text2("BUILT WITH \u2665 GLEAM")])
-                  )
-                ])
-              ),
-              div(
-                toList([
-                  class$(
-                    "bg-[#008080] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] px-2 py-1 text-white text-xs font-bold"
-                  )
-                ]),
-                toList([text2(model.current_time)])
-              )
-            ])
-          )
+          task_bar(model)
         ])
       )
     ])
@@ -13044,10 +11088,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      16,
+      24,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 507, end: 543, pattern_start: 518, pattern_end: 523 }
+      { value: $, start: 751, end: 787, pattern_start: 762, pattern_end: 767 }
     );
   }
   initializeTouchSupport();
@@ -13058,10 +11102,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      19,
+      27,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1, start: 627, end: 676, pattern_start: 638, pattern_end: 643 }
+      { value: $1, start: 865, end: 914, pattern_start: 876, pattern_end: 881 }
     );
   }
   return void 0;

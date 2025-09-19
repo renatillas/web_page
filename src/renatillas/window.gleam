@@ -1,7 +1,6 @@
 import clique
 import clique/node
-import gleam/int
-import lustre/attribute.{alt, class, href, src, style, target}
+import lustre/attribute.{alt, class, href, src, target}
 import lustre/element.{type Element}
 import lustre/element/html.{a, button, div, h1, h3, img, p, span, text}
 import lustre/event
@@ -12,22 +11,44 @@ pub type WindowAction {
   Close
 }
 
+pub type Window {
+  Window(name: WindowName, state: WindowState, position: WindowPosition)
+}
+
+pub type WindowName {
+  Email
+  Skull
+  Header
+  About
+  Libraries
+  Sites
+  Homer
+  Dancing
+}
+
+pub type WindowState {
+  Visible
+  Minimized
+  Maximized
+  Closed
+}
+
 pub type WindowConfig(msg) {
   WindowConfig(
     id: String,
     title: String,
     icon: String,
     position: #(Float, Float),
-    z_index: Int,
     on_drag: fn(Float, Float) -> msg,
     on_action: fn(WindowAction) -> msg,
+    on_click: fn() -> msg,
     content: Element(msg),
     width: String,
     is_maximized: Bool,
   )
 }
 
-pub fn create_window(config: WindowConfig(msg)) -> Element(msg) {
+fn create_window(config: WindowConfig(msg)) -> Element(msg) {
   clique.node(
     config.id,
     [
@@ -51,7 +72,6 @@ pub fn create_window(config: WindowConfig(msg)) -> Element(msg) {
         True -> "select-none"
         False -> "select-none touch-draggable"
       }),
-      style("z-index", int.to_string(config.z_index)),
     ],
     [
       div(
@@ -64,6 +84,7 @@ pub fn create_window(config: WindowConfig(msg)) -> Element(msg) {
               "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] "
               <> config.width
           }),
+          event.on_click(config.on_click()),
         ],
         [
           div(
@@ -144,251 +165,145 @@ pub type WindowPosition {
   WindowPosition(x: Float, y: Float)
 }
 
-pub fn email_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  create_window(WindowConfig(
-    id: "email-window",
-    title: "email.gif - Paint",
-    icon: "📧",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: div(
-      [
-        class(
-          "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
-        ),
-      ],
-      [
-        img([
-          src("/priv/static/email.gif"),
-          alt("Email animation"),
-          class("w-24 h-24 pixelated"),
-        ]),
-      ],
-    ),
-  ))
-}
-
-pub fn dancing_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  create_window(WindowConfig(
-    id: "dancing-window",
-    title: "dancing.gif - Media Player",
-    icon: "💃",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: div(
-      [
-        class(
-          "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
-        ),
-      ],
-      [
-        img([
-          src("/priv/static/dancing.gif"),
-          alt("Dancing animation"),
-          class("w-24 h-24 pixelated"),
-        ]),
-      ],
-    ),
-  ))
-}
-
-pub fn homer_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  WindowConfig(
-    id: "homer-window",
-    title: "homer.gif - Media Player",
-    icon: "🎵",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: div(
-      [
-        class(
-          "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1",
-        ),
-      ],
-      [
-        img([
-          src("/priv/static/homer.gif"),
-          alt("Homer Simpson"),
-          class("pixelated bg-white"),
-        ]),
-      ],
-    ),
+pub fn email_content() -> Element(msg) {
+  div(
+    [
+      class(
+        "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+      ),
+    ],
+    [
+      img([
+        src("/priv/static/email.gif"),
+        alt("Email animation"),
+        class("w-24 h-24 pixelated"),
+      ]),
+    ],
   )
-  |> create_window()
 }
 
-pub fn skull_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  WindowConfig(
-    id: "skull-window",
-    title: "skull.gif - Media Player",
-    icon: "💀",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: div(
-      [
-        class(
-          "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
-        ),
-      ],
-      [
-        img([
-          src("/priv/static/skull.gif"),
-          alt("Skull animation"),
-          class("w-20 h-20 pixelated"),
-        ]),
-      ],
-    ),
+pub fn dancing_content() -> Element(msg) {
+  div(
+    [
+      class(
+        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+      ),
+    ],
+    [
+      img([
+        src("/priv/static/dancing.gif"),
+        alt("Dancing animation"),
+        class("w-24 h-24 pixelated"),
+      ]),
+    ],
   )
-  |> create_window()
 }
 
-pub fn header_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  WindowConfig(
-    id: "header-window",
-    title: "Renata Amutio - Portfolio",
-    icon: "R",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: div(
-      [
-        class(
-          "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2",
-        ),
-      ],
-      [
-        h1([class("text-4xl font-bold text-[#000080] mb-2")], [
-          text("RENATA AMUTIO"),
-        ]),
-        p([class("text-lg text-black")], [
-          text("GLEAM DEVELOPER • FUNCTIONAL PROGRAMMING ENTHUSIAST"),
-        ]),
-        div(
-          [
-            class(
-              "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]",
-            ),
-          ],
-          [
-            div([class("text-center")], [
-              span([class("text-2xl font-bold text-[#0000ff] block")], [
-                text("17+"),
-              ]),
-              span([class("text-xs text-black font-bold")], [
-                text("LIBRARIES"),
-              ]),
-            ]),
-            div([class("text-center")], [
-              span([class("text-2xl font-bold text-[#0000ff] block")], [
-                text("2"),
-              ]),
-              span([class("text-xs text-black font-bold")], [
-                text("PROD SITES"),
-              ]),
-            ]),
-            div([class("text-center")], [
-              span([class("text-2xl font-bold text-[#0000ff] block")], [
-                text("100%"),
-              ]),
-              span([class("text-xs text-black font-bold")], [
-                text("GLEAM"),
-              ]),
-            ]),
-          ],
-        ),
-      ],
-    ),
+pub fn homer_content() -> Element(msg) {
+  div(
+    [
+      class(
+        "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1",
+      ),
+    ],
+    [
+      img([
+        src("/priv/static/homer.gif"),
+        alt("Homer Simpson"),
+        class("pixelated bg-white"),
+      ]),
+    ],
   )
-  |> create_window()
 }
 
-pub fn about_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  WindowConfig(
-    id: "about-window",
-    title: "About Me - Properties",
-    icon: "?",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: div(
-      [
-        class(
-          "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start",
-        ),
-      ],
-      [
-        div([class("flex-1")], [
-          p([class("text-black leading-relaxed text-sm")], [
-            text(
-              "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love.",
-            ),
+pub fn skull_content() -> Element(msg) {
+  div(
+    [
+      class(
+        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+      ),
+    ],
+    [
+      img([
+        src("/priv/static/skull.gif"),
+        alt("Skull animation"),
+        class("w-20 h-20 pixelated"),
+      ]),
+    ],
+  )
+}
+
+pub fn header_content() -> Element(msg) {
+  div(
+    [
+      class(
+        "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2",
+      ),
+    ],
+    [
+      h1([class("text-4xl font-bold text-[#000080] mb-2")], [
+        text("RENATA AMUTIO"),
+      ]),
+      p([class("text-lg text-black")], [
+        text("GLEAM DEVELOPER • FUNCTIONAL PROGRAMMING ENTHUSIAST"),
+      ]),
+      div(
+        [
+          class(
+            "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]",
+          ),
+        ],
+        [
+          div([class("text-center")], [
+            span([class("text-2xl font-bold text-[#0000ff] block")], [
+              text("17+"),
+            ]),
+            span([class("text-xs text-black font-bold")], [
+              text("LIBRARIES"),
+            ]),
           ]),
-        ]),
-      ],
-    ),
+          div([class("text-center")], [
+            span([class("text-2xl font-bold text-[#0000ff] block")], [
+              text("2"),
+            ]),
+            span([class("text-xs text-black font-bold")], [
+              text("PROD SITES"),
+            ]),
+          ]),
+          div([class("text-center")], [
+            span([class("text-2xl font-bold text-[#0000ff] block")], [
+              text("100%"),
+            ]),
+            span([class("text-xs text-black font-bold")], [
+              text("GLEAM"),
+            ]),
+          ]),
+        ],
+      ),
+    ],
   )
-  |> create_window()
 }
 
-fn libraries_content() -> Element(msg) {
+pub fn about_content() -> Element(msg) {
+  div(
+    [
+      class(
+        "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start",
+      ),
+    ],
+    [
+      div([class("flex-1")], [
+        p([class("text-black leading-relaxed text-sm")], [
+          text(
+            "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love.",
+          ),
+        ]),
+      ]),
+    ],
+  )
+}
+
+pub fn libraries_content() -> Element(msg) {
   div(
     [
       class(
@@ -419,29 +334,7 @@ fn libraries_content() -> Element(msg) {
   )
 }
 
-pub fn libraries_window(
-  position: WindowPosition,
-  z_index: Int,
-  on_drag: fn(Float, Float) -> msg,
-  on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
-) -> Element(msg) {
-  WindowConfig(
-    id: "libraries-window",
-    title: "My Libraries - Folder",
-    icon: "📁",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: on_drag,
-    on_action: on_action,
-    width: "",
-    is_maximized: is_maximized,
-    content: libraries_content(),
-  )
-  |> create_window()
-}
-
-fn sites_content() -> Element(msg) {
+pub fn sites_content() -> Element(msg) {
   div(
     [
       class(
@@ -493,24 +386,63 @@ fn sites_content() -> Element(msg) {
   )
 }
 
-pub fn sites_window(
-  position: WindowPosition,
-  z_index: Int,
+pub fn create_window_with_content(
+  window: Window,
   on_drag: fn(Float, Float) -> msg,
   on_action: fn(WindowAction) -> msg,
-  is_maximized: Bool,
+  on_click: fn() -> msg,
+  content: Element(msg),
 ) -> Element(msg) {
   WindowConfig(
-    id: "sites-window",
-    title: "Production Sites - Folder",
-    icon: "🌐",
-    position: #(position.x, position.y),
-    z_index: z_index,
+    id: name_to_string(window.name),
+    title: name_to_title(window.name),
+    icon: name_to_icon(window.name),
+    position: #(window.position.x, window.position.y),
     on_drag: on_drag,
     on_action: on_action,
+    on_click: on_click,
     width: "",
-    is_maximized: is_maximized,
-    content: sites_content(),
+    is_maximized: window.state == Maximized,
+    content: content,
   )
   |> create_window()
+}
+
+pub fn name_to_string(name: WindowName) -> String {
+  case name {
+    Email -> "email"
+    Skull -> "skull"
+    Header -> "portfolio"
+    About -> "about-me"
+    Libraries -> "libraries"
+    Sites -> "sites"
+    Homer -> "homer"
+    Dancing -> "dancing"
+  }
+}
+
+pub fn name_to_title(name: WindowName) -> String {
+  case name {
+    Email -> "email.gif - Paint"
+    Skull -> "skull.gif - Media Player"
+    Header -> "Renata Amutio - Portfolio"
+    About -> "About Me - Properties"
+    Libraries -> "My Libraries - Folder"
+    Sites -> "My Sites - Folder"
+    Homer -> "homer.gif - Media Player"
+    Dancing -> "dancing.gif - Media Player"
+  }
+}
+
+pub fn name_to_icon(name: WindowName) -> String {
+  case name {
+    Email -> "📧"
+    Skull -> "💀"
+    Header -> "R"
+    About -> "?"
+    Libraries -> "📁"
+    Sites -> "🌐"
+    Homer -> "🎵"
+    Dancing -> "💃"
+  }
 }
