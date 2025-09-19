@@ -1,16 +1,13 @@
 import clique
 import clique/background
-import clique/node
 import clique/transform.{type Transform}
-import gleam/int
 import lustre
-import lustre/attribute.{alt, class, href, rel, src, target}
+import lustre/attribute.{class, href, rel}
 import lustre/element.{text}
-import lustre/element/html.{
-  a, body, div, h1, h3, head, html, img, link, p, span, style, title,
-}
+import lustre/element/html.{body, button, div, head, html, link, p, span, title}
+import lustre/event
 import renatillas/touch
-import renatillas/window
+import renatillas/window.{type WindowAction, type WindowPosition, WindowPosition}
 
 pub fn main() -> Nil {
   let assert Ok(_) = clique.register()
@@ -21,8 +18,11 @@ pub fn main() -> Nil {
   Nil
 }
 
-pub type WindowPosition {
-  WindowPosition(x: Float, y: Float)
+pub type WindowState {
+  Visible
+  Minimized
+  Maximized
+  Closed
 }
 
 pub type Model {
@@ -38,8 +38,10 @@ pub type Model {
     transform: Transform,
     z_index_counter: Int,
     window_z_indexes: #(Int, Int, Int, Int, Int, Int, Int, Int),
+    window_states: #(WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState),
   )
 }
+
 
 pub type Msg {
   EmailWindowDragged(x: Float, y: Float)
@@ -50,6 +52,15 @@ pub type Msg {
   SitesWindowDragged(x: Float, y: Float)
   HomerWindowDragged(x: Float, y: Float)
   DancingWindowDragged(x: Float, y: Float)
+  EmailWindowAction(WindowAction)
+  SkullWindowAction(WindowAction)
+  HeaderWindowAction(WindowAction)
+  AboutWindowAction(WindowAction)
+  LibrariesWindowAction(WindowAction)
+  SitesWindowAction(WindowAction)
+  HomerWindowAction(WindowAction)
+  DancingWindowAction(WindowAction)
+  RestoreWindow(String)
   ViewportPanned(Transform)
 }
 
@@ -66,6 +77,7 @@ fn init(_flags) -> Model {
     transform: #(0.0, 0.0, 0.8),
     z_index_counter: 8,
     window_z_indexes: #(1, 2, 3, 4, 5, 6, 7, 8),
+    window_states: #(Visible, Visible, Visible, Visible, Visible, Visible, Visible, Visible),
   )
 }
 
@@ -290,598 +302,208 @@ fn update(model: Model, msg: Msg) -> Model {
     ViewportPanned(transform) -> {
       Model(..model, transform: transform)
     }
+    EmailWindowAction(window.Minimize) -> {
+      let #(_, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(Minimized, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    EmailWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case email_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(new_state, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    EmailWindowAction(window.Close) -> {
+      let #(_, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(Closed, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    SkullWindowAction(window.Minimize) -> {
+      let #(email_s, _, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, Minimized, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    SkullWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case skull_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, new_state, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    SkullWindowAction(window.Close) -> {
+      let #(email_s, _, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, Closed, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    HeaderWindowAction(window.Minimize) -> {
+      let #(email_s, skull_s, _, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, Minimized, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    HeaderWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case header_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, skull_s, new_state, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    HeaderWindowAction(window.Close) -> {
+      let #(email_s, skull_s, _, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, Closed, about_s, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    AboutWindowAction(window.Minimize) -> {
+      let #(email_s, skull_s, header_s, _, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, Minimized, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    AboutWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case about_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, skull_s, header_s, new_state, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    AboutWindowAction(window.Close) -> {
+      let #(email_s, skull_s, header_s, _, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, Closed, libraries_s, sites_s, homer_s, dancing_s))
+    }
+    LibrariesWindowAction(window.Minimize) -> {
+      let #(email_s, skull_s, header_s, about_s, _, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, Minimized, sites_s, homer_s, dancing_s))
+    }
+    LibrariesWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case libraries_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, new_state, sites_s, homer_s, dancing_s))
+    }
+    LibrariesWindowAction(window.Close) -> {
+      let #(email_s, skull_s, header_s, about_s, _, sites_s, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, Closed, sites_s, homer_s, dancing_s))
+    }
+    SitesWindowAction(window.Minimize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, _, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, Minimized, homer_s, dancing_s))
+    }
+    SitesWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case sites_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, new_state, homer_s, dancing_s))
+    }
+    SitesWindowAction(window.Close) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, _, homer_s, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, Closed, homer_s, dancing_s))
+    }
+    HomerWindowAction(window.Minimize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, _, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, Minimized, dancing_s))
+    }
+    HomerWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case homer_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, new_state, dancing_s))
+    }
+    HomerWindowAction(window.Close) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, _, dancing_s) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, Closed, dancing_s))
+    }
+    DancingWindowAction(window.Minimize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, _) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, Minimized))
+    }
+    DancingWindowAction(window.Maximize) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      let new_state = case dancing_s {
+        Maximized -> Visible
+        _ -> Maximized
+      }
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, new_state))
+    }
+    DancingWindowAction(window.Close) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, _) = model.window_states
+      Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, Closed))
+    }
+    RestoreWindow(window_id) -> {
+      let #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s) = model.window_states
+      case window_id {
+        "email" -> Model(..model, window_states: #(Visible, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+        "skull" -> Model(..model, window_states: #(email_s, Visible, header_s, about_s, libraries_s, sites_s, homer_s, dancing_s))
+        "header" -> Model(..model, window_states: #(email_s, skull_s, Visible, about_s, libraries_s, sites_s, homer_s, dancing_s))
+        "about" -> Model(..model, window_states: #(email_s, skull_s, header_s, Visible, libraries_s, sites_s, homer_s, dancing_s))
+        "libraries" -> Model(..model, window_states: #(email_s, skull_s, header_s, about_s, Visible, sites_s, homer_s, dancing_s))
+        "sites" -> Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, Visible, homer_s, dancing_s))
+        "homer" -> Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, Visible, dancing_s))
+        "dancing" -> Model(..model, window_states: #(email_s, skull_s, header_s, about_s, libraries_s, sites_s, homer_s, Visible))
+        _ -> model
+      }
+    }
   }
 }
 
-fn create_email_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  window.create_window(window.WindowConfig(
-    id: "email-window",
-    title: "email.gif - Paint",
-    icon: "📧",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: EmailWindowDragged,
-    width: "",
-    content: div(
-      [
-        class(
-          "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
-        ),
-      ],
-      [
-        img([
-          src("/priv/static/email.gif"),
-          alt("Email animation"),
-          class("w-24 h-24 pixelated"),
-        ]),
-      ],
-    ),
-  ))
-}
-
-fn create_dancing_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  window.create_window(window.WindowConfig(
-    id: "dancing-window",
-    title: "dancing.gif - Media Player",
-    icon: "💃",
-    position: #(position.x, position.y),
-    z_index: z_index,
-    on_drag: DancingWindowDragged,
-    width: "",
-    content: div(
-      [
-        class(
-          "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
-        ),
-      ],
-      [
-        img([
-          src("/priv/static/dancing.gif"),
-          alt("Dancing animation"),
-          class("w-24 h-24 pixelated"),
-        ]),
-      ],
-    ),
-  ))
-}
-
-fn create_homer_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  clique.node(
-    "homer-window",
+fn create_taskbar_button(title: String, icon: String, window_id: String) -> element.Element(Msg) {
+  button(
     [
-      node.position(position.x, position.y),
-      node.on_drag(fn(_, x, y, _, _) { HomerWindowDragged(x, y) }),
-      class("cursor-move select-none touch-draggable"),
-      attribute.style("z-index", int.to_string(z_index)),
-    ],
-    [
-      div(
-        [
-          class(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]",
-          ),
-        ],
-        [
-          div(
-            [
-              class(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle",
-              ),
-            ],
-            [
-              div([class("flex items-center gap-2")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
-                    ),
-                  ],
-                  [text("🎵")],
-                ),
-                span([class("font-bold text-xs")], [
-                  text("homer.gif - Media Player"),
-                ]),
-              ]),
-              div([class("flex gap-1")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-3 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("×")],
-                ),
-              ]),
-            ],
-          ),
-          div(
-            [
-              class(
-                "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1",
-              ),
-            ],
-            [
-              img([
-                src("/priv/static/homer.gif"),
-                alt("Homer Simpson"),
-                class("pixelated bg-white"),
-              ]),
-            ],
-          ),
-        ],
+      class(
+        "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-2 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white max-w-32 truncate",
       ),
+      event.on_click(RestoreWindow(window_id)),
     ],
+    [span([class("mr-1")], [text(icon)]), text(title)],
   )
 }
 
-fn create_skull_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  clique.node(
-    "skull-window",
-    [
-      node.position(position.x, position.y),
-      node.on_drag(fn(_, x, y, _, _) { SkullWindowDragged(x, y) }),
-      class("cursor-move select-none touch-draggable"),
-      attribute.style("z-index", int.to_string(z_index)),
-    ],
-    [
-      div(
-        [
-          class(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]",
-          ),
-        ],
-        [
-          div(
-            [
-              class(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle",
-              ),
-            ],
-            [
-              div([class("flex items-center gap-2")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
-                    ),
-                  ],
-                  [text("💀")],
-                ),
-                span([class("font-bold text-xs")], [
-                  text("skull.gif - Media Player"),
-                ]),
-              ]),
-              div([class("flex gap-1")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-3 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("×")],
-                ),
-              ]),
-            ],
-          ),
-          div(
-            [
-              class(
-                "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
-              ),
-            ],
-            [
-              img([
-                src("/priv/static/skull.gif"),
-                alt("Skull animation"),
-                class("w-20 h-20 pixelated"),
-              ]),
-            ],
-          ),
-        ],
-      ),
-    ],
-  )
-}
-
-fn create_header_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  clique.node(
-    "header-window",
-    [
-      node.position(position.x, position.y),
-      node.on_drag(fn(_, x, y, _, _) { HeaderWindowDragged(x, y) }),
-      class("cursor-move select-none touch-draggable"),
-      attribute.style("z-index", int.to_string(z_index)),
-    ],
-    [
-      div(
-        [
-          class(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96",
-          ),
-        ],
-        [
-          div(
-            [
-              class(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle",
-              ),
-            ],
-            [
-              div([class("flex items-center gap-2")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
-                    ),
-                  ],
-                  [text("R")],
-                ),
-                span([class("font-bold text-sm")], [
-                  text("Renata Amutio - Portfolio"),
-                ]),
-              ]),
-              div([class("flex gap-1")], [
-                div(
-                  [
-                    class(
-                      "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("_")],
-                ),
-                div(
-                  [
-                    class(
-                      "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("□")],
-                ),
-                div(
-                  [
-                    class(
-                      "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("×")],
-                ),
-              ]),
-            ],
-          ),
-          div(
-            [
-              class(
-                "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2",
-              ),
-            ],
-            [
-              h1([class("text-4xl font-bold text-[#000080] mb-2")], [
-                text("RENATA AMUTIO"),
-              ]),
-              p([class("text-lg text-black")], [
-                text("GLEAM DEVELOPER • FUNCTIONAL PROGRAMMING ENTHUSIAST"),
-              ]),
-              div(
-                [
-                  class(
-                    "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]",
-                  ),
-                ],
-                [
-                  div([class("text-center")], [
-                    span([class("text-2xl font-bold text-[#0000ff] block")], [
-                      text("17+"),
-                    ]),
-                    span([class("text-xs text-black font-bold")], [
-                      text("LIBRARIES"),
-                    ]),
-                  ]),
-                  div([class("text-center")], [
-                    span([class("text-2xl font-bold text-[#0000ff] block")], [
-                      text("2"),
-                    ]),
-                    span([class("text-xs text-black font-bold")], [
-                      text("PROD SITES"),
-                    ]),
-                  ]),
-                  div([class("text-center")], [
-                    span([class("text-2xl font-bold text-[#0000ff] block")], [
-                      text("100%"),
-                    ]),
-                    span([class("text-xs text-black font-bold")], [
-                      text("GLEAM"),
-                    ]),
-                  ]),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
-  )
-}
-
-fn create_about_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  clique.node(
-    "about-window",
-    [
-      node.position(position.x, position.y),
-      node.on_drag(fn(_, x, y, _, _) { AboutWindowDragged(x, y) }),
-      class("cursor-move select-none touch-draggable"),
-      attribute.style("z-index", int.to_string(z_index)),
-    ],
-    [
-      div(
-        [
-          class(
-            "max-w-md bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]",
-          ),
-        ],
-        [
-          div(
-            [
-              class(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle",
-              ),
-            ],
-            [
-              div([class("flex items-center gap-2")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
-                    ),
-                  ],
-                  [text("?")],
-                ),
-                span([class("font-bold text-sm")], [
-                  text("About Me - Properties"),
-                ]),
-              ]),
-              div([class("flex gap-1")], [
-                div(
-                  [
-                    class(
-                      "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("×")],
-                ),
-              ]),
-            ],
-          ),
-          div(
-            [
-              class(
-                "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start",
-              ),
-            ],
-            [
-              div([class("flex-1")], [
-                p([class("text-black leading-relaxed text-sm")], [
-                  text(
-                    "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love.",
-                  ),
-                ]),
-              ]),
-            ],
-          ),
-        ],
-      ),
-    ],
-  )
-}
-
-fn create_libraries_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  clique.node(
-    "libraries-window",
-    [
-      node.position(position.x, position.y),
-      node.on_drag(fn(_, x, y, _, _) { LibrariesWindowDragged(x, y) }),
-      class("cursor-move select-none touch-draggable"),
-      attribute.style("z-index", int.to_string(z_index)),
-    ],
-    [
-      div(
-        [
-          class(
-            "max-w-md bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]",
-          ),
-        ],
-        [
-          div(
-            [
-              class(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle",
-              ),
-            ],
-            [
-              div([class("flex items-center gap-2")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-4 bg-[#ffff00] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
-                    ),
-                  ],
-                  [text("📁")],
-                ),
-                span([class("font-bold text-sm")], [
-                  text("My Libraries - Folder"),
-                ]),
-              ]),
-              div([class("flex gap-1")], [
-                div(
-                  [
-                    class(
-                      "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("×")],
-                ),
-              ]),
-            ],
-          ),
-          div(
-            [
-              class(
-                "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2",
-              ),
-            ],
-            [
-              h3([class("text-lg font-bold text-[#000080] mb-3")], [
-                text("17+ Open Source Libraries"),
-              ]),
-              p([class("text-black leading-relaxed text-sm mb-4")], [
-                text(
-                  "Crafted with precision using Gleam's powerful type system. Each library solves real problems while maintaining elegant APIs and comprehensive documentation.",
-                ),
-              ]),
-              a(
-                [
-                  href("https://github.com/renatillas"),
-                  target("_blank"),
-                  class(
-                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
-                  ),
-                  node.nodrag(),
-                ],
-                [text("Github")],
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
-  )
-}
-
-fn create_sites_window(
-  position: WindowPosition,
-  z_index: Int,
-) -> element.Element(Msg) {
-  clique.node(
-    "sites-window",
-    [
-      node.position(position.x, position.y),
-      node.on_drag(fn(_, x, y, _, _) { SitesWindowDragged(x, y) }),
-      class("cursor-move select-none touch-draggable"),
-      attribute.style("z-index", int.to_string(z_index)),
-    ],
-    [
-      div(
-        [
-          class(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96",
-          ),
-        ],
-        [
-          div(
-            [
-              class(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle",
-              ),
-            ],
-            [
-              div([class("flex items-center gap-2")], [
-                div(
-                  [
-                    class(
-                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
-                    ),
-                  ],
-                  [text("🌐")],
-                ),
-                span([class("font-bold text-sm")], [text("Production Sites")]),
-              ]),
-              div([class("flex gap-1")], [
-                div(
-                  [
-                    class(
-                      "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold",
-                    ),
-                  ],
-                  [text("×")],
-                ),
-              ]),
-            ],
-          ),
-          div(
-            [
-              class(
-                "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2",
-              ),
-            ],
-            [
-              div([class("space-y-4")], [
-                div([], [
-                  h3([class("text-lg font-bold text-[#000080] mb-2")], [
-                    text("La Tienda de Helen"),
-                  ]),
-                  p([class("text-black text-sm mb-2")], [
-                    text(
-                      "E-commerce platform built with modern web technologies",
-                    ),
-                  ]),
-                  a(
-                    [
-                      href("https://latiendadehelen.com"),
-                      target("_blank"),
-                      class(
-                        "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
-                      ),
-                      node.nodrag(),
-                    ],
-                    [text("Visit Site")],
-                  ),
-                ]),
-                div([], [
-                  h3([class("text-lg font-bold text-[#000080] mb-2")], [
-                    text("Keitepinxa Studio"),
-                  ]),
-                  p([class("text-black text-sm mb-2")], [
-                    text("Creative studio website showcasing digital artistry"),
-                  ]),
-                  a(
-                    [
-                      href("https://keitepinxa.studio"),
-                      target("_blank"),
-                      class(
-                        "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
-                      ),
-                      node.nodrag(),
-                    ],
-                    [text("Visit Site")],
-                  ),
-                ]),
-              ]),
-            ],
-          ),
-        ],
-      ),
-    ],
-  )
+fn get_minimized_windows(window_states: #(WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState, WindowState)) -> List(element.Element(Msg)) {
+  let #(email_state, skull_state, header_state, about_state, libraries_state, sites_state, homer_state, dancing_state) = window_states
+  let windows = []
+  
+  let windows = case email_state {
+    Minimized -> [create_taskbar_button("email.gif", "📧", "email"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case skull_state {
+    Minimized -> [create_taskbar_button("skull.gif", "💀", "skull"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case header_state {
+    Minimized -> [create_taskbar_button("Portfolio", "R", "header"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case about_state {
+    Minimized -> [create_taskbar_button("About Me", "?", "about"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case libraries_state {
+    Minimized -> [create_taskbar_button("Libraries", "📁", "libraries"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case sites_state {
+    Minimized -> [create_taskbar_button("Sites", "🌐", "sites"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case homer_state {
+    Minimized -> [create_taskbar_button("homer.gif", "🎵", "homer"), ..windows]
+    _ -> windows
+  }
+  
+  let windows = case dancing_state {
+    Minimized -> [create_taskbar_button("dancing.gif", "💃", "dancing"), ..windows]
+    _ -> windows
+  }
+  
+  windows
 }
 
 fn view(model: Model) -> element.Element(Msg) {
@@ -894,58 +516,6 @@ fn view(model: Model) -> element.Element(Msg) {
           "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap",
         ),
       ]),
-      style(
-        [],
-        "
-        .pixelated {
-          image-rendering: -moz-crisp-edges;
-          image-rendering: -webkit-crisp-edges; 
-          image-rendering: pixelated;
-          image-rendering: crisp-edges;
-        }
-        .blink {
-          animation: blink 1s linear infinite;
-        }
-        @keyframes blink {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0; }
-        }
-        /* Enhanced touch support for mobile dragging */
-        .touch-draggable {
-          touch-action: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-          -webkit-touch-callout: none;
-        }
-        .drag-handle {
-          cursor: move;
-          -webkit-user-drag: none;
-          -khtml-user-drag: none;
-          -moz-user-drag: none;
-          -o-user-drag: none;
-          user-drag: none;
-        }
-        /* Prevent text selection on mobile */
-        .touch-draggable, .touch-draggable * {
-          -webkit-tap-highlight-color: transparent;
-        }
-        /* Prevent dragging on buttons and links */
-        .no-drag, button, a, [data-window-button] {
-          pointer-events: auto !important;
-          position: relative;
-          z-index: 9999;
-        }
-        /* Ensure drag handles don't override button clicks */
-        .drag-handle button,
-        .drag-handle a,
-        .drag-handle [data-window-button] {
-          pointer-events: auto !important;
-          z-index: 10000;
-        }
-      ",
-      ),
     ]),
     body(
       [
@@ -968,64 +538,125 @@ fn view(model: Model) -> element.Element(Msg) {
               class("text-gray-200/20"),
               background.gap(50.0, 50.0),
             ]),
-            clique.nodes([
-              #(
-                "email-window",
-                create_email_window(
-                  model.email_window,
-                  model.window_z_indexes.0,
-                ),
-              ),
-              #(
-                "skull-window",
-                create_skull_window(
-                  model.skull_window,
-                  model.window_z_indexes.1,
-                ),
-              ),
-              #(
-                "header-window",
-                create_header_window(
-                  model.header_window,
-                  model.window_z_indexes.2,
-                ),
-              ),
-              #(
-                "about-window",
-                create_about_window(
-                  model.about_window,
-                  model.window_z_indexes.3,
-                ),
-              ),
-              #(
-                "libraries-window",
-                create_libraries_window(
-                  model.libraries_window,
-                  model.window_z_indexes.4,
-                ),
-              ),
-              #(
-                "sites-window",
-                create_sites_window(
-                  model.sites_window,
-                  model.window_z_indexes.5,
-                ),
-              ),
-              #(
-                "homer-window",
-                create_homer_window(
-                  model.homer_window,
-                  model.window_z_indexes.6,
-                ),
-              ),
-              #(
-                "dancing-window",
-                create_dancing_window(
-                  model.dancing_window,
-                  model.window_z_indexes.7,
-                ),
-              ),
-            ]),
+            clique.nodes(
+              case model.window_states {
+                #(email_state, skull_state, header_state, about_state, libraries_state, sites_state, homer_state, dancing_state) ->
+                  [
+                    case email_state {
+                      Closed -> #("email-window", div([], []))
+                      Minimized -> #("email-window", div([], []))
+                      _ -> #(
+                        "email-window",
+                        window.email_window(
+                          model.email_window,
+                          model.window_z_indexes.0,
+                          EmailWindowDragged,
+                          EmailWindowAction,
+                          email_state == Maximized,
+                        ),
+                      )
+                    },
+                    case skull_state {
+                      Closed -> #("skull-window", div([], []))
+                      Minimized -> #("skull-window", div([], []))
+                      _ -> #(
+                        "skull-window",
+                        window.skull_window(
+                          model.skull_window,
+                          model.window_z_indexes.1,
+                          SkullWindowDragged,
+                          SkullWindowAction,
+                          skull_state == Maximized,
+                        ),
+                      )
+                    },
+                    case header_state {
+                      Closed -> #("header-window", div([], []))
+                      Minimized -> #("header-window", div([], []))
+                      _ -> #(
+                        "header-window",
+                        window.header_window(
+                          model.header_window,
+                          model.window_z_indexes.2,
+                          HeaderWindowDragged,
+                          HeaderWindowAction,
+                          header_state == Maximized,
+                        ),
+                      )
+                    },
+                    case about_state {
+                      Closed -> #("about-window", div([], []))
+                      Minimized -> #("about-window", div([], []))
+                      _ -> #(
+                        "about-window",
+                        window.about_window(
+                          model.about_window,
+                          model.window_z_indexes.3,
+                          AboutWindowDragged,
+                          AboutWindowAction,
+                          about_state == Maximized,
+                        ),
+                      )
+                    },
+                    case libraries_state {
+                      Closed -> #("libraries-window", div([], []))
+                      Minimized -> #("libraries-window", div([], []))
+                      _ -> #(
+                        "libraries-window",
+                        window.libraries_window(
+                          model.libraries_window,
+                          model.window_z_indexes.4,
+                          LibrariesWindowDragged,
+                          LibrariesWindowAction,
+                          libraries_state == Maximized,
+                        ),
+                      )
+                    },
+                    case sites_state {
+                      Closed -> #("sites-window", div([], []))
+                      Minimized -> #("sites-window", div([], []))
+                      _ -> #(
+                        "sites-window",
+                        window.sites_window(
+                          model.sites_window,
+                          model.window_z_indexes.5,
+                          SitesWindowDragged,
+                          SitesWindowAction,
+                          sites_state == Maximized,
+                        ),
+                      )
+                    },
+                    case homer_state {
+                      Closed -> #("homer-window", div([], []))
+                      Minimized -> #("homer-window", div([], []))
+                      _ -> #(
+                        "homer-window",
+                        window.homer_window(
+                          model.homer_window,
+                          model.window_z_indexes.6,
+                          HomerWindowDragged,
+                          HomerWindowAction,
+                          homer_state == Maximized,
+                        ),
+                      )
+                    },
+                    case dancing_state {
+                      Closed -> #("dancing-window", div([], []))
+                      Minimized -> #("dancing-window", div([], []))
+                      _ -> #(
+                        "dancing-window",
+                        window.dancing_window(
+                          model.dancing_window,
+                          model.window_z_indexes.7,
+                          DancingWindowDragged,
+                          DancingWindowAction,
+                          dancing_state == Maximized,
+                        ),
+                      )
+                    },
+                  ]
+              }
+            ),
           ],
         ),
         // Simple footer taskbar - remove all the static content above this
@@ -1036,16 +667,19 @@ fn view(model: Model) -> element.Element(Msg) {
             ),
           ],
           [
-            div([class("flex items-center gap-2")], [
-              div(
-                [
-                  class(
-                    "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm",
-                  ),
-                ],
-                [span([class("text-lg")], [text("🟢")]), text("Start")],
-              ),
-            ]),
+            div([class("flex items-center gap-2")], 
+              [
+                div(
+                  [
+                    class(
+                      "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm",
+                    ),
+                  ],
+                  [span([class("text-lg")], [text("🟢")]), text("Start")],
+                ),
+                ..get_minimized_windows(model.window_states)
+              ]
+            ),
             div([class("flex-1 text-center")], [
               p([class("text-black text-xs font-bold")], [
                 text("BUILT WITH ♥ GLEAM"),

@@ -6384,6 +6384,9 @@ function prevent_default(event4) {
     return event4;
   }
 }
+function on_click(msg) {
+  return on("click", success(msg));
+}
 
 // build/dev/javascript/clique/clique/edge.mjs
 var Model2 = class extends CustomType {
@@ -9806,8 +9809,14 @@ function initializeTouchSupport() {
 }
 
 // build/dev/javascript/renatillas/renatillas/window.mjs
+var Minimize = class extends CustomType {
+};
+var Maximize = class extends CustomType {
+};
+var Close = class extends CustomType {
+};
 var WindowConfig = class extends CustomType {
-  constructor(id2, title2, icon, position2, z_index, on_drag2, content, width) {
+  constructor(id2, title2, icon, position2, z_index, on_drag2, on_action, content, width, is_maximized) {
     super();
     this.id = id2;
     this.title = title2;
@@ -9815,11 +9824,20 @@ var WindowConfig = class extends CustomType {
     this.position = position2;
     this.z_index = z_index;
     this.on_drag = on_drag2;
+    this.on_action = on_action;
     this.content = content;
     this.width = width;
+    this.is_maximized = is_maximized;
   }
 };
-function create_window_controls() {
+var WindowPosition = class extends CustomType {
+  constructor(x, y) {
+    super();
+    this.x = x;
+    this.y = y;
+  }
+};
+function create_window_controls(on_action, is_maximized) {
   return div(
     toList([class$("flex gap-1")]),
     toList([
@@ -9828,7 +9846,8 @@ function create_window_controls() {
           class$(
             "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
           ),
-          nodrag()
+          nodrag(),
+          on_click(on_action(new Minimize()))
         ]),
         toList([text3("_")])
       ),
@@ -9837,16 +9856,28 @@ function create_window_controls() {
           class$(
             "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
           ),
-          nodrag()
+          nodrag(),
+          on_click(on_action(new Maximize()))
         ]),
-        toList([text3("\u25A1")])
+        toList([
+          text3(
+            (() => {
+              if (is_maximized) {
+                return "\u2750";
+              } else {
+                return "\u25A1";
+              }
+            })()
+          )
+        ])
       ),
       button(
         toList([
           class$(
             "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white cursor-pointer"
           ),
-          nodrag()
+          nodrag(),
+          on_click(on_action(new Close()))
         ]),
         toList([text3("\xD7")])
       )
@@ -9857,18 +9888,62 @@ function create_window(config) {
   return node(
     config.id,
     toList([
-      position(config.position[0], config.position[1]),
-      on_drag((_, x, y, _1, _2) => {
-        return config.on_drag(x, y);
-      }),
-      class$("cursor-move select-none touch-draggable"),
+      position(
+        (() => {
+          let $ = config.is_maximized;
+          if ($) {
+            return [0, 0];
+          } else {
+            return config.position;
+          }
+        })()[0],
+        (() => {
+          let $ = config.is_maximized;
+          if ($) {
+            return [0, 0];
+          } else {
+            return config.position;
+          }
+        })()[1]
+      ),
+      on_drag(
+        (() => {
+          let $ = config.is_maximized;
+          if ($) {
+            return (_, _1, _2, _3, _4) => {
+              return config.on_drag(config.position[0], config.position[1]);
+            };
+          } else {
+            return (_, x, y, _1, _2) => {
+              return config.on_drag(x, y);
+            };
+          }
+        })()
+      ),
+      class$(
+        (() => {
+          let $ = config.is_maximized;
+          if ($) {
+            return "select-none";
+          } else {
+            return "cursor-move select-none touch-draggable";
+          }
+        })()
+      ),
       style("z-index", to_string(config.z_index))
     ]),
     toList([
       div(
         toList([
           class$(
-            "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] " + config.width
+            (() => {
+              let $ = config.is_maximized;
+              if ($) {
+                return "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-screen h-screen max-w-none " + config.width;
+              } else {
+                return "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] " + config.width;
+              }
+            })()
           )
         ]),
         toList([
@@ -9903,7 +9978,7 @@ function create_window(config) {
                   )
                 ])
               ),
-              create_window_controls()
+              create_window_controls(config.on_action, config.is_maximized)
             ])
           ),
           config.content
@@ -9912,30 +9987,401 @@ function create_window(config) {
     ])
   );
 }
+function email_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  return create_window(
+    new WindowConfig(
+      "email-window",
+      "email.gif - Paint",
+      "\u{1F4E7}",
+      [position2.x, position2.y],
+      z_index,
+      on_drag2,
+      on_action,
+      div(
+        toList([
+          class$(
+            "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+          )
+        ]),
+        toList([
+          img(
+            toList([
+              src("/priv/static/email.gif"),
+              alt("Email animation"),
+              class$("w-24 h-24 pixelated")
+            ])
+          )
+        ])
+      ),
+      "",
+      is_maximized
+    )
+  );
+}
+function dancing_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  return create_window(
+    new WindowConfig(
+      "dancing-window",
+      "dancing.gif - Media Player",
+      "\u{1F483}",
+      [position2.x, position2.y],
+      z_index,
+      on_drag2,
+      on_action,
+      div(
+        toList([
+          class$(
+            "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+          )
+        ]),
+        toList([
+          img(
+            toList([
+              src("/priv/static/dancing.gif"),
+              alt("Dancing animation"),
+              class$("w-24 h-24 pixelated")
+            ])
+          )
+        ])
+      ),
+      "",
+      is_maximized
+    )
+  );
+}
+function homer_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  let _pipe = new WindowConfig(
+    "homer-window",
+    "homer.gif - Media Player",
+    "\u{1F3B5}",
+    [position2.x, position2.y],
+    z_index,
+    on_drag2,
+    on_action,
+    div(
+      toList([
+        class$(
+          "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1"
+        )
+      ]),
+      toList([
+        img(
+          toList([
+            src("/priv/static/homer.gif"),
+            alt("Homer Simpson"),
+            class$("pixelated bg-white")
+          ])
+        )
+      ])
+    ),
+    "",
+    is_maximized
+  );
+  return create_window(_pipe);
+}
+function skull_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  let _pipe = new WindowConfig(
+    "skull-window",
+    "skull.gif - Media Player",
+    "\u{1F480}",
+    [position2.x, position2.y],
+    z_index,
+    on_drag2,
+    on_action,
+    div(
+      toList([
+        class$(
+          "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+        )
+      ]),
+      toList([
+        img(
+          toList([
+            src("/priv/static/skull.gif"),
+            alt("Skull animation"),
+            class$("w-20 h-20 pixelated")
+          ])
+        )
+      ])
+    ),
+    "",
+    is_maximized
+  );
+  return create_window(_pipe);
+}
+function header_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  let _pipe = new WindowConfig(
+    "header-window",
+    "Renata Amutio - Portfolio",
+    "R",
+    [position2.x, position2.y],
+    z_index,
+    on_drag2,
+    on_action,
+    div(
+      toList([
+        class$(
+          "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
+        )
+      ]),
+      toList([
+        h1(
+          toList([class$("text-4xl font-bold text-[#000080] mb-2")]),
+          toList([text3("RENATA AMUTIO")])
+        ),
+        p(
+          toList([class$("text-lg text-black")]),
+          toList([text3("GLEAM DEVELOPER \u2022 FUNCTIONAL PROGRAMMING ENTHUSIAST")])
+        ),
+        div(
+          toList([
+            class$(
+              "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]"
+            )
+          ]),
+          toList([
+            div(
+              toList([class$("text-center")]),
+              toList([
+                span(
+                  toList([class$("text-2xl font-bold text-[#0000ff] block")]),
+                  toList([text3("17+")])
+                ),
+                span(
+                  toList([class$("text-xs text-black font-bold")]),
+                  toList([text3("LIBRARIES")])
+                )
+              ])
+            ),
+            div(
+              toList([class$("text-center")]),
+              toList([
+                span(
+                  toList([class$("text-2xl font-bold text-[#0000ff] block")]),
+                  toList([text3("2")])
+                ),
+                span(
+                  toList([class$("text-xs text-black font-bold")]),
+                  toList([text3("PROD SITES")])
+                )
+              ])
+            ),
+            div(
+              toList([class$("text-center")]),
+              toList([
+                span(
+                  toList([class$("text-2xl font-bold text-[#0000ff] block")]),
+                  toList([text3("100%")])
+                ),
+                span(
+                  toList([class$("text-xs text-black font-bold")]),
+                  toList([text3("GLEAM")])
+                )
+              ])
+            )
+          ])
+        )
+      ])
+    ),
+    "",
+    is_maximized
+  );
+  return create_window(_pipe);
+}
+function about_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  let _pipe = new WindowConfig(
+    "about-window",
+    "About Me - Properties",
+    "?",
+    [position2.x, position2.y],
+    z_index,
+    on_drag2,
+    on_action,
+    div(
+      toList([
+        class$(
+          "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start"
+        )
+      ]),
+      toList([
+        div(
+          toList([class$("flex-1")]),
+          toList([
+            p(
+              toList([class$("text-black leading-relaxed text-sm")]),
+              toList([
+                text3(
+                  "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love."
+                )
+              ])
+            )
+          ])
+        )
+      ])
+    ),
+    "",
+    is_maximized
+  );
+  return create_window(_pipe);
+}
+function libraries_content() {
+  return div(
+    toList([
+      class$(
+        "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
+      )
+    ]),
+    toList([
+      h3(
+        toList([class$("text-lg font-bold text-[#000080] mb-3")]),
+        toList([text3("17+ Open Source Libraries")])
+      ),
+      p(
+        toList([class$("text-black leading-relaxed text-sm mb-4")]),
+        toList([
+          text3(
+            "Crafted with precision using Gleam's powerful type system. Each library solves real problems while maintaining elegant APIs and comprehensive documentation."
+          )
+        ])
+      ),
+      a(
+        toList([
+          href("https://github.com/renatillas"),
+          target("_blank"),
+          class$(
+            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+          ),
+          nodrag()
+        ]),
+        toList([text3("Github")])
+      )
+    ])
+  );
+}
+function libraries_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  let _pipe = new WindowConfig(
+    "libraries-window",
+    "My Libraries - Folder",
+    "\u{1F4C1}",
+    [position2.x, position2.y],
+    z_index,
+    on_drag2,
+    on_action,
+    libraries_content(),
+    "",
+    is_maximized
+  );
+  return create_window(_pipe);
+}
+function sites_content() {
+  return div(
+    toList([
+      class$(
+        "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
+      )
+    ]),
+    toList([
+      div(
+        toList([class$("space-y-4")]),
+        toList([
+          div(
+            toList([]),
+            toList([
+              h3(
+                toList([class$("text-lg font-bold text-[#000080] mb-2")]),
+                toList([text3("La Tienda de Helen")])
+              ),
+              p(
+                toList([class$("text-black text-sm mb-2")]),
+                toList([
+                  text3("E-commerce platform built with modern web technologies")
+                ])
+              ),
+              a(
+                toList([
+                  href("https://latiendadehelen.com"),
+                  target("_blank"),
+                  class$(
+                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                  ),
+                  nodrag()
+                ]),
+                toList([text3("Visit Site")])
+              )
+            ])
+          ),
+          div(
+            toList([]),
+            toList([
+              h3(
+                toList([class$("text-lg font-bold text-[#000080] mb-2")]),
+                toList([text3("Keitepinxa Studio")])
+              ),
+              p(
+                toList([class$("text-black text-sm mb-2")]),
+                toList([
+                  text3("Creative studio website showcasing digital artistry")
+                ])
+              ),
+              a(
+                toList([
+                  href("https://keitepinxa.studio"),
+                  target("_blank"),
+                  class$(
+                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                  ),
+                  nodrag()
+                ]),
+                toList([text3("Visit Site")])
+              )
+            ])
+          )
+        ])
+      )
+    ])
+  );
+}
+function sites_window(position2, z_index, on_drag2, on_action, is_maximized) {
+  let _pipe = new WindowConfig(
+    "sites-window",
+    "Production Sites - Folder",
+    "\u{1F310}",
+    [position2.x, position2.y],
+    z_index,
+    on_drag2,
+    on_action,
+    sites_content(),
+    "",
+    is_maximized
+  );
+  return create_window(_pipe);
+}
 
 // build/dev/javascript/renatillas/renatillas.mjs
 var FILEPATH = "src/renatillas.gleam";
-var WindowPosition = class extends CustomType {
-  constructor(x, y) {
-    super();
-    this.x = x;
-    this.y = y;
-  }
+var Visible = class extends CustomType {
+};
+var Minimized = class extends CustomType {
+};
+var Maximized = class extends CustomType {
+};
+var Closed = class extends CustomType {
 };
 var Model7 = class extends CustomType {
-  constructor(email_window, skull_window, homer_window, header_window, about_window, libraries_window, sites_window, dancing_window, transform3, z_index_counter, window_z_indexes) {
+  constructor(email_window2, skull_window2, homer_window2, header_window2, about_window2, libraries_window2, sites_window2, dancing_window2, transform3, z_index_counter, window_z_indexes, window_states) {
     super();
-    this.email_window = email_window;
-    this.skull_window = skull_window;
-    this.homer_window = homer_window;
-    this.header_window = header_window;
-    this.about_window = about_window;
-    this.libraries_window = libraries_window;
-    this.sites_window = sites_window;
-    this.dancing_window = dancing_window;
+    this.email_window = email_window2;
+    this.skull_window = skull_window2;
+    this.homer_window = homer_window2;
+    this.header_window = header_window2;
+    this.about_window = about_window2;
+    this.libraries_window = libraries_window2;
+    this.sites_window = sites_window2;
+    this.dancing_window = dancing_window2;
     this.transform = transform3;
     this.z_index_counter = z_index_counter;
     this.window_z_indexes = window_z_indexes;
+    this.window_states = window_states;
   }
 };
 var EmailWindowDragged = class extends CustomType {
@@ -9994,6 +10440,60 @@ var DancingWindowDragged = class extends CustomType {
     this.y = y;
   }
 };
+var EmailWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var SkullWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var HeaderWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var AboutWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var LibrariesWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var SitesWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var HomerWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var DancingWindowAction = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var RestoreWindow = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
 var ViewportPanned = class extends CustomType {
   constructor($0) {
     super();
@@ -10012,7 +10512,17 @@ function init9(_) {
     new WindowPosition(1200, 400),
     [0, 0, 0.8],
     8,
-    [1, 2, 3, 4, 5, 6, 7, 8]
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [
+      new Visible(),
+      new Visible(),
+      new Visible(),
+      new Visible(),
+      new Visible(),
+      new Visible(),
+      new Visible(),
+      new Visible()
+    ]
   );
 }
 function update10(model, msg) {
@@ -10055,7 +10565,8 @@ function update10(model, msg) {
         sites_z,
         homer_z,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof SkullWindowDragged) {
     let x = msg.x;
@@ -10096,7 +10607,8 @@ function update10(model, msg) {
         sites_z,
         homer_z,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof HeaderWindowDragged) {
     let x = msg.x;
@@ -10137,7 +10649,8 @@ function update10(model, msg) {
         sites_z,
         homer_z,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof AboutWindowDragged) {
     let x = msg.x;
@@ -10178,7 +10691,8 @@ function update10(model, msg) {
         sites_z,
         homer_z,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof LibrariesWindowDragged) {
     let x = msg.x;
@@ -10219,7 +10733,8 @@ function update10(model, msg) {
         sites_z,
         homer_z,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof SitesWindowDragged) {
     let x = msg.x;
@@ -10260,7 +10775,8 @@ function update10(model, msg) {
         new_z_index,
         homer_z,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof HomerWindowDragged) {
     let x = msg.x;
@@ -10301,7 +10817,8 @@ function update10(model, msg) {
         sites_z,
         new_z_index,
         dancing_z
-      ]
+      ],
+      model.window_states
     );
   } else if (msg instanceof DancingWindowDragged) {
     let x = msg.x;
@@ -10342,8 +10859,1255 @@ function update10(model, msg) {
         sites_z,
         homer_z,
         new_z_index
-      ]
+      ],
+      model.window_states
     );
+  } else if (msg instanceof EmailWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          new Minimized(),
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (email_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          new_state,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          new Closed(),
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof SkullWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          new Minimized(),
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (skull_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          new_state,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          new Closed(),
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof HeaderWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          new Minimized(),
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (header_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          new_state,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          new Closed(),
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof AboutWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          new Minimized(),
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (about_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          new_state,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          new Closed(),
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof LibrariesWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          new Minimized(),
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (libraries_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          new_state,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          new Closed(),
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof SitesWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          new Minimized(),
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (sites_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          new_state,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          new Closed(),
+          homer_s,
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof HomerWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          new Minimized(),
+          dancing_s
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (homer_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          new_state,
+          dancing_s
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      dancing_s = $1[7];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          new Closed(),
+          dancing_s
+        ]
+      );
+    }
+  } else if (msg instanceof DancingWindowAction) {
+    let $ = msg[0];
+    if ($ instanceof Minimize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          new Minimized()
+        ]
+      );
+    } else if ($ instanceof Maximize) {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      let dancing_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      dancing_s = $1[7];
+      let _block;
+      if (dancing_s instanceof Maximized) {
+        _block = new Visible();
+      } else {
+        _block = new Maximized();
+      }
+      let new_state = _block;
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          new_state
+        ]
+      );
+    } else {
+      let $1 = model.window_states;
+      let email_s;
+      let skull_s;
+      let header_s;
+      let about_s;
+      let libraries_s;
+      let sites_s;
+      let homer_s;
+      email_s = $1[0];
+      skull_s = $1[1];
+      header_s = $1[2];
+      about_s = $1[3];
+      libraries_s = $1[4];
+      sites_s = $1[5];
+      homer_s = $1[6];
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          new Closed()
+        ]
+      );
+    }
+  } else if (msg instanceof RestoreWindow) {
+    let window_id = msg[0];
+    let $ = model.window_states;
+    let email_s;
+    let skull_s;
+    let header_s;
+    let about_s;
+    let libraries_s;
+    let sites_s;
+    let homer_s;
+    let dancing_s;
+    email_s = $[0];
+    skull_s = $[1];
+    header_s = $[2];
+    about_s = $[3];
+    libraries_s = $[4];
+    sites_s = $[5];
+    homer_s = $[6];
+    dancing_s = $[7];
+    if (window_id === "email") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          new Visible(),
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if (window_id === "skull") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          new Visible(),
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if (window_id === "header") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          new Visible(),
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if (window_id === "about") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          new Visible(),
+          libraries_s,
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if (window_id === "libraries") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          new Visible(),
+          sites_s,
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if (window_id === "sites") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          new Visible(),
+          homer_s,
+          dancing_s
+        ]
+      );
+    } else if (window_id === "homer") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          new Visible(),
+          dancing_s
+        ]
+      );
+    } else if (window_id === "dancing") {
+      return new Model7(
+        model.email_window,
+        model.skull_window,
+        model.homer_window,
+        model.header_window,
+        model.about_window,
+        model.libraries_window,
+        model.sites_window,
+        model.dancing_window,
+        model.transform,
+        model.z_index_counter,
+        model.window_z_indexes,
+        [
+          email_s,
+          skull_s,
+          header_s,
+          about_s,
+          libraries_s,
+          sites_s,
+          homer_s,
+          new Visible()
+        ]
+      );
+    } else {
+      return model;
+    }
   } else {
     let transform3 = msg[0];
     return new Model7(
@@ -10357,706 +12121,121 @@ function update10(model, msg) {
       model.dancing_window,
       transform3,
       model.z_index_counter,
-      model.window_z_indexes
+      model.window_z_indexes,
+      model.window_states
     );
   }
 }
-function create_email_window(position2, z_index) {
-  return create_window(
-    new WindowConfig(
-      "email-window",
-      "email.gif - Paint",
-      "\u{1F4E7}",
-      [position2.x, position2.y],
-      z_index,
-      (var0, var1) => {
-        return new EmailWindowDragged(var0, var1);
-      },
-      div(
-        toList([
-          class$(
-            "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
-          )
-        ]),
-        toList([
-          img(
-            toList([
-              src("/priv/static/email.gif"),
-              alt("Email animation"),
-              class$("w-24 h-24 pixelated")
-            ])
-          )
-        ])
-      ),
-      ""
-    )
-  );
-}
-function create_dancing_window(position2, z_index) {
-  return create_window(
-    new WindowConfig(
-      "dancing-window",
-      "dancing.gif - Media Player",
-      "\u{1F483}",
-      [position2.x, position2.y],
-      z_index,
-      (var0, var1) => {
-        return new DancingWindowDragged(var0, var1);
-      },
-      div(
-        toList([
-          class$(
-            "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
-          )
-        ]),
-        toList([
-          img(
-            toList([
-              src("/priv/static/dancing.gif"),
-              alt("Dancing animation"),
-              class$("w-24 h-24 pixelated")
-            ])
-          )
-        ])
-      ),
-      ""
-    )
-  );
-}
-function create_homer_window(position2, z_index) {
-  return node(
-    "homer-window",
+function create_taskbar_button(title2, icon, window_id) {
+  return button(
     toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new HomerWindowDragged(x, y);
-        }
+      class$(
+        "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-2 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white max-w-32 truncate"
       ),
-      class$("cursor-move select-none touch-draggable"),
-      style("z-index", to_string(z_index))
+      on_click(new RestoreWindow(window_id))
     ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
-          )
-        ]),
-        toList([
-          div(
-            toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\u{1F3B5}")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-xs")]),
-                    toList([text2("homer.gif - Media Player")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-3 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1"
-              )
-            ]),
-            toList([
-              img(
-                toList([
-                  src("/priv/static/homer.gif"),
-                  alt("Homer Simpson"),
-                  class$("pixelated bg-white")
-                ])
-              )
-            ])
-          )
-        ])
-      )
-    ])
+    toList([span(toList([class$("mr-1")]), toList([text2(icon)])), text2(title2)])
   );
 }
-function create_skull_window(position2, z_index) {
-  return node(
-    "skull-window",
-    toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new SkullWindowDragged(x, y);
-        }
-      ),
-      class$("cursor-move select-none touch-draggable"),
-      style("z-index", to_string(z_index))
-    ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
-          )
-        ]),
-        toList([
-          div(
-            toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\u{1F480}")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-xs")]),
-                    toList([text2("skull.gif - Media Player")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-3 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
-              )
-            ]),
-            toList([
-              img(
-                toList([
-                  src("/priv/static/skull.gif"),
-                  alt("Skull animation"),
-                  class$("w-20 h-20 pixelated")
-                ])
-              )
-            ])
-          )
-        ])
-      )
-    ])
-  );
-}
-function create_header_window(position2, z_index) {
-  return node(
-    "header-window",
-    toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new HeaderWindowDragged(x, y);
-        }
-      ),
-      class$("cursor-move select-none touch-draggable"),
-      style("z-index", to_string(z_index))
-    ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96"
-          )
-        ]),
-        toList([
-          div(
-            toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("R")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-sm")]),
-                    toList([text2("Renata Amutio - Portfolio")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("_")])
-                  ),
-                  div(
-                    toList([
-                      class$(
-                        "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\u25A1")])
-                  ),
-                  div(
-                    toList([
-                      class$(
-                        "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "p-6 text-center bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
-              )
-            ]),
-            toList([
-              h1(
-                toList([class$("text-4xl font-bold text-[#000080] mb-2")]),
-                toList([text2("RENATA AMUTIO")])
-              ),
-              p(
-                toList([class$("text-lg text-black")]),
-                toList([
-                  text2("GLEAM DEVELOPER \u2022 FUNCTIONAL PROGRAMMING ENTHUSIAST")
-                ])
-              ),
-              div(
-                toList([
-                  class$(
-                    "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]"
-                  )
-                ]),
-                toList([
-                  div(
-                    toList([class$("text-center")]),
-                    toList([
-                      span(
-                        toList([
-                          class$("text-2xl font-bold text-[#0000ff] block")
-                        ]),
-                        toList([text2("17+")])
-                      ),
-                      span(
-                        toList([class$("text-xs text-black font-bold")]),
-                        toList([text2("LIBRARIES")])
-                      )
-                    ])
-                  ),
-                  div(
-                    toList([class$("text-center")]),
-                    toList([
-                      span(
-                        toList([
-                          class$("text-2xl font-bold text-[#0000ff] block")
-                        ]),
-                        toList([text2("2")])
-                      ),
-                      span(
-                        toList([class$("text-xs text-black font-bold")]),
-                        toList([text2("PROD SITES")])
-                      )
-                    ])
-                  ),
-                  div(
-                    toList([class$("text-center")]),
-                    toList([
-                      span(
-                        toList([
-                          class$("text-2xl font-bold text-[#0000ff] block")
-                        ]),
-                        toList([text2("100%")])
-                      ),
-                      span(
-                        toList([class$("text-xs text-black font-bold")]),
-                        toList([text2("GLEAM")])
-                      )
-                    ])
-                  )
-                ])
-              )
-            ])
-          )
-        ])
-      )
-    ])
-  );
-}
-function create_about_window(position2, z_index) {
-  return node(
-    "about-window",
-    toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new AboutWindowDragged(x, y);
-        }
-      ),
-      class$("cursor-move select-none touch-draggable"),
-      style("z-index", to_string(z_index))
-    ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "max-w-md bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
-          )
-        ]),
-        toList([
-          div(
-            toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("?")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-sm")]),
-                    toList([text2("About Me - Properties")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex-1")]),
-                toList([
-                  p(
-                    toList([class$("text-black leading-relaxed text-sm")]),
-                    toList([
-                      text2(
-                        "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love."
-                      )
-                    ])
-                  )
-                ])
-              )
-            ])
-          )
-        ])
-      )
-    ])
-  );
-}
-function create_libraries_window(position2, z_index) {
-  return node(
-    "libraries-window",
-    toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new LibrariesWindowDragged(x, y);
-        }
-      ),
-      class$("cursor-move select-none touch-draggable"),
-      style("z-index", to_string(z_index))
-    ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "max-w-md bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080]"
-          )
-        ]),
-        toList([
-          div(
-            toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#ffff00] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\u{1F4C1}")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-sm")]),
-                    toList([text2("My Libraries - Folder")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
-              )
-            ]),
-            toList([
-              h3(
-                toList([class$("text-lg font-bold text-[#000080] mb-3")]),
-                toList([text2("17+ Open Source Libraries")])
-              ),
-              p(
-                toList([class$("text-black leading-relaxed text-sm mb-4")]),
-                toList([
-                  text2(
-                    "Crafted with precision using Gleam's powerful type system. Each library solves real problems while maintaining elegant APIs and comprehensive documentation."
-                  )
-                ])
-              ),
-              a(
-                toList([
-                  href("https://github.com/renatillas"),
-                  target("_blank"),
-                  class$(
-                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                  ),
-                  nodrag()
-                ]),
-                toList([text2("Github")])
-              )
-            ])
-          )
-        ])
-      )
-    ])
-  );
-}
-function create_sites_window(position2, z_index) {
-  return node(
-    "sites-window",
-    toList([
-      position(position2.x, position2.y),
-      on_drag(
-        (_, x, y, _1, _2) => {
-          return new SitesWindowDragged(x, y);
-        }
-      ),
-      class$("cursor-move select-none touch-draggable"),
-      style("z-index", to_string(z_index))
-    ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96"
-          )
-        ]),
-        toList([
-          div(
-            toList([
-              class$(
-                "bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between drag-handle"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("flex items-center gap-2")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\u{1F310}")])
-                  ),
-                  span(
-                    toList([class$("font-bold text-sm")]),
-                    toList([text2("Production Sites")])
-                  )
-                ])
-              ),
-              div(
-                toList([class$("flex gap-1")]),
-                toList([
-                  div(
-                    toList([
-                      class$(
-                        "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold"
-                      )
-                    ]),
-                    toList([text2("\xD7")])
-                  )
-                ])
-              )
-            ])
-          ),
-          div(
-            toList([
-              class$(
-                "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2"
-              )
-            ]),
-            toList([
-              div(
-                toList([class$("space-y-4")]),
-                toList([
-                  div(
-                    toList([]),
-                    toList([
-                      h3(
-                        toList([class$("text-lg font-bold text-[#000080] mb-2")]),
-                        toList([text2("La Tienda de Helen")])
-                      ),
-                      p(
-                        toList([class$("text-black text-sm mb-2")]),
-                        toList([
-                          text2(
-                            "E-commerce platform built with modern web technologies"
-                          )
-                        ])
-                      ),
-                      a(
-                        toList([
-                          href("https://latiendadehelen.com"),
-                          target("_blank"),
-                          class$(
-                            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                          ),
-                          nodrag()
-                        ]),
-                        toList([text2("Visit Site")])
-                      )
-                    ])
-                  ),
-                  div(
-                    toList([]),
-                    toList([
-                      h3(
-                        toList([class$("text-lg font-bold text-[#000080] mb-2")]),
-                        toList([text2("Keitepinxa Studio")])
-                      ),
-                      p(
-                        toList([class$("text-black text-sm mb-2")]),
-                        toList([
-                          text2(
-                            "Creative studio website showcasing digital artistry"
-                          )
-                        ])
-                      ),
-                      a(
-                        toList([
-                          href("https://keitepinxa.studio"),
-                          target("_blank"),
-                          class$(
-                            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                          ),
-                          nodrag()
-                        ]),
-                        toList([text2("Visit Site")])
-                      )
-                    ])
-                  )
-                ])
-              )
-            ])
-          )
-        ])
-      )
-    ])
-  );
+function get_minimized_windows(window_states) {
+  let email_state;
+  let skull_state;
+  let header_state;
+  let about_state;
+  let libraries_state;
+  let sites_state;
+  let homer_state;
+  let dancing_state;
+  email_state = window_states[0];
+  skull_state = window_states[1];
+  header_state = window_states[2];
+  about_state = window_states[3];
+  libraries_state = window_states[4];
+  sites_state = window_states[5];
+  homer_state = window_states[6];
+  dancing_state = window_states[7];
+  let windows = toList([]);
+  let _block;
+  if (email_state instanceof Minimized) {
+    _block = prepend(
+      create_taskbar_button("email.gif", "\u{1F4E7}", "email"),
+      windows
+    );
+  } else {
+    _block = windows;
+  }
+  let windows$1 = _block;
+  let _block$1;
+  if (skull_state instanceof Minimized) {
+    _block$1 = prepend(
+      create_taskbar_button("skull.gif", "\u{1F480}", "skull"),
+      windows$1
+    );
+  } else {
+    _block$1 = windows$1;
+  }
+  let windows$2 = _block$1;
+  let _block$2;
+  if (header_state instanceof Minimized) {
+    _block$2 = prepend(
+      create_taskbar_button("Portfolio", "R", "header"),
+      windows$2
+    );
+  } else {
+    _block$2 = windows$2;
+  }
+  let windows$3 = _block$2;
+  let _block$3;
+  if (about_state instanceof Minimized) {
+    _block$3 = prepend(
+      create_taskbar_button("About Me", "?", "about"),
+      windows$3
+    );
+  } else {
+    _block$3 = windows$3;
+  }
+  let windows$4 = _block$3;
+  let _block$4;
+  if (libraries_state instanceof Minimized) {
+    _block$4 = prepend(
+      create_taskbar_button("Libraries", "\u{1F4C1}", "libraries"),
+      windows$4
+    );
+  } else {
+    _block$4 = windows$4;
+  }
+  let windows$5 = _block$4;
+  let _block$5;
+  if (sites_state instanceof Minimized) {
+    _block$5 = prepend(
+      create_taskbar_button("Sites", "\u{1F310}", "sites"),
+      windows$5
+    );
+  } else {
+    _block$5 = windows$5;
+  }
+  let windows$6 = _block$5;
+  let _block$6;
+  if (homer_state instanceof Minimized) {
+    _block$6 = prepend(
+      create_taskbar_button("homer.gif", "\u{1F3B5}", "homer"),
+      windows$6
+    );
+  } else {
+    _block$6 = windows$6;
+  }
+  let windows$7 = _block$6;
+  let _block$7;
+  if (dancing_state instanceof Minimized) {
+    _block$7 = prepend(
+      create_taskbar_button("dancing.gif", "\u{1F483}", "dancing"),
+      windows$7
+    );
+  } else {
+    _block$7 = windows$7;
+  }
+  let windows$8 = _block$7;
+  return windows$8;
 }
 function view7(model) {
   return html(
@@ -11073,10 +12252,6 @@ function view7(model) {
                 "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap"
               )
             ])
-          ),
-          style2(
-            toList([]),
-            "\n        .pixelated {\n          image-rendering: -moz-crisp-edges;\n          image-rendering: -webkit-crisp-edges; \n          image-rendering: pixelated;\n          image-rendering: crisp-edges;\n        }\n        .blink {\n          animation: blink 1s linear infinite;\n        }\n        @keyframes blink {\n          0%, 50% { opacity: 1; }\n          51%, 100% { opacity: 0; }\n        }\n        /* Enhanced touch support for mobile dragging */\n        .touch-draggable {\n          touch-action: none;\n          -webkit-user-select: none;\n          -moz-user-select: none;\n          -ms-user-select: none;\n          user-select: none;\n          -webkit-touch-callout: none;\n        }\n        .drag-handle {\n          cursor: move;\n          -webkit-user-drag: none;\n          -khtml-user-drag: none;\n          -moz-user-drag: none;\n          -o-user-drag: none;\n          user-drag: none;\n        }\n        /* Prevent text selection on mobile */\n        .touch-draggable, .touch-draggable * {\n          -webkit-tap-highlight-color: transparent;\n        }\n        /* Prevent dragging on buttons and links */\n        .no-drag, button, a, [data-window-button] {\n          pointer-events: auto !important;\n          position: relative;\n          z-index: 9999;\n        }\n        /* Ensure drag handles don't override button clicks */\n        .drag-handle button,\n        .drag-handle a,\n        .drag-handle [data-window-button] {\n          pointer-events: auto !important;\n          z-index: 10000;\n        }\n      "
           )
         ])
       ),
@@ -11108,64 +12283,195 @@ function view7(model) {
                 ])
               ),
               nodes(
-                toList([
-                  [
-                    "email-window",
-                    create_email_window(
-                      model.email_window,
-                      model.window_z_indexes[0]
-                    )
-                  ],
-                  [
-                    "skull-window",
-                    create_skull_window(
-                      model.skull_window,
-                      model.window_z_indexes[1]
-                    )
-                  ],
-                  [
-                    "header-window",
-                    create_header_window(
-                      model.header_window,
-                      model.window_z_indexes[2]
-                    )
-                  ],
-                  [
-                    "about-window",
-                    create_about_window(
-                      model.about_window,
-                      model.window_z_indexes[3]
-                    )
-                  ],
-                  [
-                    "libraries-window",
-                    create_libraries_window(
-                      model.libraries_window,
-                      model.window_z_indexes[4]
-                    )
-                  ],
-                  [
-                    "sites-window",
-                    create_sites_window(
-                      model.sites_window,
-                      model.window_z_indexes[5]
-                    )
-                  ],
-                  [
-                    "homer-window",
-                    create_homer_window(
-                      model.homer_window,
-                      model.window_z_indexes[6]
-                    )
-                  ],
-                  [
-                    "dancing-window",
-                    create_dancing_window(
-                      model.dancing_window,
-                      model.window_z_indexes[7]
-                    )
-                  ]
-                ])
+                (() => {
+                  let $ = model.window_states;
+                  let email_state = $[0];
+                  let skull_state = $[1];
+                  let header_state = $[2];
+                  let about_state = $[3];
+                  let libraries_state = $[4];
+                  let sites_state = $[5];
+                  let homer_state = $[6];
+                  let dancing_state = $[7];
+                  return toList([
+                    (() => {
+                      if (email_state instanceof Minimized) {
+                        return ["email-window", div(toList([]), toList([]))];
+                      } else if (email_state instanceof Closed) {
+                        return ["email-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "email-window",
+                          email_window(
+                            model.email_window,
+                            model.window_z_indexes[0],
+                            (var0, var1) => {
+                              return new EmailWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new EmailWindowAction(var0);
+                            },
+                            isEqual(email_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (skull_state instanceof Minimized) {
+                        return ["skull-window", div(toList([]), toList([]))];
+                      } else if (skull_state instanceof Closed) {
+                        return ["skull-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "skull-window",
+                          skull_window(
+                            model.skull_window,
+                            model.window_z_indexes[1],
+                            (var0, var1) => {
+                              return new SkullWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new SkullWindowAction(var0);
+                            },
+                            isEqual(skull_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (header_state instanceof Minimized) {
+                        return ["header-window", div(toList([]), toList([]))];
+                      } else if (header_state instanceof Closed) {
+                        return ["header-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "header-window",
+                          header_window(
+                            model.header_window,
+                            model.window_z_indexes[2],
+                            (var0, var1) => {
+                              return new HeaderWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new HeaderWindowAction(var0);
+                            },
+                            isEqual(header_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (about_state instanceof Minimized) {
+                        return ["about-window", div(toList([]), toList([]))];
+                      } else if (about_state instanceof Closed) {
+                        return ["about-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "about-window",
+                          about_window(
+                            model.about_window,
+                            model.window_z_indexes[3],
+                            (var0, var1) => {
+                              return new AboutWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new AboutWindowAction(var0);
+                            },
+                            isEqual(about_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (libraries_state instanceof Minimized) {
+                        return ["libraries-window", div(toList([]), toList([]))];
+                      } else if (libraries_state instanceof Closed) {
+                        return ["libraries-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "libraries-window",
+                          libraries_window(
+                            model.libraries_window,
+                            model.window_z_indexes[4],
+                            (var0, var1) => {
+                              return new LibrariesWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new LibrariesWindowAction(var0);
+                            },
+                            isEqual(libraries_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (sites_state instanceof Minimized) {
+                        return ["sites-window", div(toList([]), toList([]))];
+                      } else if (sites_state instanceof Closed) {
+                        return ["sites-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "sites-window",
+                          sites_window(
+                            model.sites_window,
+                            model.window_z_indexes[5],
+                            (var0, var1) => {
+                              return new SitesWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new SitesWindowAction(var0);
+                            },
+                            isEqual(sites_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (homer_state instanceof Minimized) {
+                        return ["homer-window", div(toList([]), toList([]))];
+                      } else if (homer_state instanceof Closed) {
+                        return ["homer-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "homer-window",
+                          homer_window(
+                            model.homer_window,
+                            model.window_z_indexes[6],
+                            (var0, var1) => {
+                              return new HomerWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new HomerWindowAction(var0);
+                            },
+                            isEqual(homer_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })(),
+                    (() => {
+                      if (dancing_state instanceof Minimized) {
+                        return ["dancing-window", div(toList([]), toList([]))];
+                      } else if (dancing_state instanceof Closed) {
+                        return ["dancing-window", div(toList([]), toList([]))];
+                      } else {
+                        return [
+                          "dancing-window",
+                          dancing_window(
+                            model.dancing_window,
+                            model.window_z_indexes[7],
+                            (var0, var1) => {
+                              return new DancingWindowDragged(var0, var1);
+                            },
+                            (var0) => {
+                              return new DancingWindowAction(var0);
+                            },
+                            isEqual(dancing_state, new Maximized())
+                          )
+                        ];
+                      }
+                    })()
+                  ]);
+                })()
               )
             ])
           ),
@@ -11178,7 +12484,7 @@ function view7(model) {
             toList([
               div(
                 toList([class$("flex items-center gap-2")]),
-                toList([
+                prepend(
                   div(
                     toList([
                       class$(
@@ -11189,8 +12495,9 @@ function view7(model) {
                       span(toList([class$("text-lg")]), toList([text2("\u{1F7E2}")])),
                       text2("Start")
                     ])
-                  )
-                ])
+                  ),
+                  get_minimized_windows(model.window_states)
+                )
               ),
               div(
                 toList([class$("flex-1 text-center")]),
@@ -11223,10 +12530,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      16,
+      13,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 396, end: 432, pattern_start: 407, pattern_end: 412 }
+      { value: $, start: 399, end: 435, pattern_start: 410, pattern_end: 415 }
     );
   }
   initializeTouchSupport();
@@ -11237,10 +12544,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      19,
+      16,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1, start: 516, end: 565, pattern_start: 527, pattern_end: 532 }
+      { value: $1, start: 519, end: 568, pattern_start: 530, pattern_end: 535 }
     );
   }
   return void 0;
