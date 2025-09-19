@@ -408,9 +408,6 @@
   .border-l-white {
     border-left-color: var(--color-white);
   }
-  .bg-\[\#000000\] {
-    background-color: #000000;
-  }
   .bg-\[\#008000\] {
     background-color: #008000;
   }
@@ -419,9 +416,6 @@
   }
   .bg-\[\#c0c0c0\] {
     background-color: #c0c0c0;
-  }
-  .bg-\[\#ffff00\] {
-    background-color: #ffff00;
   }
   .bg-\[\#ffffff\] {
     background-color: #ffffff;
@@ -469,6 +463,9 @@
   }
   .py-1 {
     padding-block: calc(var(--spacing) * 1);
+  }
+  .pr-10 {
+    padding-right: calc(var(--spacing) * 10);
   }
   .text-center {
     text-align: center;

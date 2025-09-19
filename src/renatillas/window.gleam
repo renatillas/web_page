@@ -97,16 +97,13 @@ fn create_window(config: WindowConfig(msg)) -> Element(msg) {
               div([class("flex items-center gap-2")], [
                 div(
                   [
-                    class(case config.icon {
-                      "📁" ->
-                        "w-4 h-4 bg-[#ffff00] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                      _ ->
-                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
-                    }),
+                    class(
+                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
+                    ),
                   ],
                   [text(config.icon)],
                 ),
-                span([class("font-bold text-sm")], [text(config.title)]),
+                span([class("font-bold text-sm pr-10 ")], [text(config.title)]),
               ]),
               create_window_controls(config.on_action, config.is_maximized),
             ],
@@ -169,7 +166,7 @@ pub fn email_content() -> Element(msg) {
   div(
     [
       class(
-        "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
       ),
     ],
     [
@@ -186,7 +183,7 @@ pub fn dancing_content() -> Element(msg) {
   div(
     [
       class(
-        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
       ),
     ],
     [
@@ -220,7 +217,7 @@ pub fn skull_content() -> Element(msg) {
   div(
     [
       class(
-        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
       ),
     ],
     [

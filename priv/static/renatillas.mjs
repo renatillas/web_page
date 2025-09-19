@@ -10163,20 +10163,13 @@ function create_window(config) {
                   div(
                     toList([
                       class$(
-                        (() => {
-                          let $ = config.icon;
-                          if ($ === "\u{1F4C1}") {
-                            return "w-4 h-4 bg-[#ffff00] border border-[#808080] flex items-center justify-center text-xs text-black font-bold";
-                          } else {
-                            return "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold";
-                          }
-                        })()
+                        "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold"
                       )
                     ]),
                     toList([text3(config.icon)])
                   ),
                   span(
-                    toList([class$("font-bold text-sm")]),
+                    toList([class$("font-bold text-sm pr-10 ")]),
                     toList([text3(config.title)])
                   )
                 ])
@@ -10194,7 +10187,7 @@ function email_content() {
   return div(
     toList([
       class$(
-        "p-2 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
       )
     ]),
     toList([
@@ -10212,7 +10205,7 @@ function dancing_content() {
   return div(
     toList([
       class$(
-        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
       )
     ]),
     toList([
@@ -10248,7 +10241,7 @@ function skull_content() {
   return div(
     toList([
       class$(
-        "p-2 bg-[#000000] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1"
       )
     ]),
     toList([
