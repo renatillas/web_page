@@ -261,7 +261,7 @@ pub fn header_content() -> Element(msg) {
           ]),
           div([class("text-center")], [
             span([class("text-2xl font-bold text-[#0000ff] block")], [
-              text("2"),
+              text("3"),
             ]),
             span([class("text-xs text-black font-bold")], [
               text("PROD SITES"),
@@ -369,6 +369,25 @@ pub fn sites_content() -> Element(msg) {
           a(
             [
               href("https://keitepinxa.studio"),
+              target("_blank"),
+              class(
+                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+              ),
+              node.nodrag(),
+            ],
+            [text("Visit Site")],
+          ),
+        ]),
+        div([], [
+          h3([class("text-lg font-bold text-[#000080] mb-2")], [
+            text("Santomot"),
+          ]),
+          p([class("text-black text-sm mb-2")], [
+            text("A MTG custom cards shop"),
+          ]),
+          a(
+            [
+              href("https://santomot.com"),
               target("_blank"),
               class(
                 "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",

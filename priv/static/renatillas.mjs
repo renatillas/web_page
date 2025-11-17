@@ -21,19 +21,16 @@ var List = class {
   toArray() {
     return [...this];
   }
-  // @internal
   atLeastLength(desired) {
     let current = this;
     while (desired-- > 0 && current) current = current.tail;
     return current !== void 0;
   }
-  // @internal
   hasLength(desired) {
     let current = this;
     while (desired-- > 0 && current) current = current.tail;
     return desired === -1 && current instanceof Empty;
   }
-  // @internal
   countLength() {
     let current = this;
     let length2 = 0;
@@ -162,7 +159,6 @@ var BitArray = class {
     }
     return bitArrayByteAt(this.rawBuffer, this.bitOffset, index4);
   }
-  /** @internal */
   equals(other) {
     if (this.bitSize !== other.bitSize) {
       return false;
@@ -273,7 +269,6 @@ function bitArrayPrintDeprecationWarning(name2, message) {
   isBitArrayDeprecationMessagePrinted[name2] = true;
 }
 var Result = class _Result extends CustomType {
-  // @internal
   static isResult(data2) {
     return data2 instanceof _Result;
   }
@@ -283,7 +278,6 @@ var Ok = class extends Result {
     super();
     this[0] = value;
   }
-  // @internal
   isOk() {
     return true;
   }
@@ -293,7 +287,6 @@ var Error = class extends Result {
     super();
     this[0] = detail;
   }
-  // @internal
   isOk() {
     return false;
   }
@@ -3578,74 +3571,74 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
     let new$10 = loop$new;
     let added = loop$added;
     let removed = loop$removed;
-    if (new$10 instanceof Empty) {
-      if (old instanceof Empty) {
+    if (old instanceof Empty) {
+      if (new$10 instanceof Empty) {
         return new AttributeChange(added, removed, events);
       } else {
-        let $ = old.head;
+        let $ = new$10.head;
         if ($ instanceof Event2) {
-          let prev = $;
-          let old$1 = old.tail;
+          let next = $;
+          let new$1 = new$10.tail;
           let name2 = $.name;
-          let removed$1 = prepend(prev, removed);
-          let events$1 = remove_event(events, path2, name2);
+          let handler2 = $.handler;
+          let added$1 = prepend(next, added);
+          let events$1 = add_event(events, mapper, path2, name2, handler2);
           loop$controlled = controlled2;
           loop$path = path2;
           loop$mapper = mapper;
           loop$events = events$1;
-          loop$old = old$1;
-          loop$new = new$10;
-          loop$added = added;
-          loop$removed = removed$1;
+          loop$old = old;
+          loop$new = new$1;
+          loop$added = added$1;
+          loop$removed = removed;
         } else {
-          let prev = $;
-          let old$1 = old.tail;
-          let removed$1 = prepend(prev, removed);
+          let next = $;
+          let new$1 = new$10.tail;
+          let added$1 = prepend(next, added);
           loop$controlled = controlled2;
           loop$path = path2;
           loop$mapper = mapper;
           loop$events = events;
-          loop$old = old$1;
-          loop$new = new$10;
-          loop$added = added;
-          loop$removed = removed$1;
+          loop$old = old;
+          loop$new = new$1;
+          loop$added = added$1;
+          loop$removed = removed;
         }
       }
-    } else if (old instanceof Empty) {
-      let $ = new$10.head;
+    } else if (new$10 instanceof Empty) {
+      let $ = old.head;
       if ($ instanceof Event2) {
-        let next = $;
-        let new$1 = new$10.tail;
+        let prev = $;
+        let old$1 = old.tail;
         let name2 = $.name;
-        let handler2 = $.handler;
-        let added$1 = prepend(next, added);
-        let events$1 = add_event(events, mapper, path2, name2, handler2);
+        let removed$1 = prepend(prev, removed);
+        let events$1 = remove_event(events, path2, name2);
         loop$controlled = controlled2;
         loop$path = path2;
         loop$mapper = mapper;
         loop$events = events$1;
-        loop$old = old;
-        loop$new = new$1;
-        loop$added = added$1;
-        loop$removed = removed;
+        loop$old = old$1;
+        loop$new = new$10;
+        loop$added = added;
+        loop$removed = removed$1;
       } else {
-        let next = $;
-        let new$1 = new$10.tail;
-        let added$1 = prepend(next, added);
+        let prev = $;
+        let old$1 = old.tail;
+        let removed$1 = prepend(prev, removed);
         loop$controlled = controlled2;
         loop$path = path2;
         loop$mapper = mapper;
         loop$events = events;
-        loop$old = old;
-        loop$new = new$1;
-        loop$added = added$1;
-        loop$removed = removed;
+        loop$old = old$1;
+        loop$new = new$10;
+        loop$added = added;
+        loop$removed = removed$1;
       }
     } else {
-      let next = new$10.head;
-      let remaining_new = new$10.tail;
       let prev = old.head;
       let remaining_old = old.tail;
+      let next = new$10.head;
+      let remaining_new = new$10.tail;
       let $ = compare3(prev, next);
       if ($ instanceof Lt) {
         if (prev instanceof Event2) {
@@ -3672,8 +3665,8 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
           loop$removed = removed$1;
         }
       } else if ($ instanceof Eq) {
-        if (next instanceof Attribute) {
-          if (prev instanceof Attribute) {
+        if (prev instanceof Attribute) {
+          if (next instanceof Attribute) {
             let _block;
             let $1 = next.name;
             if ($1 === "value") {
@@ -3701,11 +3694,18 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
             loop$new = remaining_new;
             loop$added = added$1;
             loop$removed = removed;
-          } else if (prev instanceof Event2) {
-            let name2 = prev.name;
+          } else if (next instanceof Event2) {
+            let name2 = next.name;
+            let handler2 = next.handler;
             let added$1 = prepend(next, added);
             let removed$1 = prepend(prev, removed);
-            let events$1 = remove_event(events, path2, name2);
+            let events$1 = add_event(
+              events,
+              mapper,
+              path2,
+              name2,
+              handler2
+            );
             loop$controlled = controlled2;
             loop$path = path2;
             loop$mapper = mapper;
@@ -3726,8 +3726,8 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
             loop$added = added$1;
             loop$removed = removed$1;
           }
-        } else if (next instanceof Property) {
-          if (prev instanceof Property) {
+        } else if (prev instanceof Property) {
+          if (next instanceof Property) {
             let _block;
             let $1 = next.name;
             if ($1 === "scrollLeft") {
@@ -3768,11 +3768,18 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
             loop$new = remaining_new;
             loop$added = added$1;
             loop$removed = removed;
-          } else if (prev instanceof Event2) {
-            let name2 = prev.name;
+          } else if (next instanceof Event2) {
+            let name2 = next.name;
+            let handler2 = next.handler;
             let added$1 = prepend(next, added);
             let removed$1 = prepend(prev, removed);
-            let events$1 = remove_event(events, path2, name2);
+            let events$1 = add_event(
+              events,
+              mapper,
+              path2,
+              name2,
+              handler2
+            );
             loop$controlled = controlled2;
             loop$path = path2;
             loop$mapper = mapper;
@@ -3793,7 +3800,7 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
             loop$added = added$1;
             loop$removed = removed$1;
           }
-        } else if (prev instanceof Event2) {
+        } else if (next instanceof Event2) {
           let name2 = next.name;
           let handler2 = next.handler;
           let has_changes = prev.prevent_default.kind !== next.prevent_default.kind || prev.stop_propagation.kind !== next.stop_propagation.kind || prev.immediate !== next.immediate || prev.debounce !== next.debounce || prev.throttle !== next.throttle;
@@ -3814,11 +3821,10 @@ function diff_attributes(loop$controlled, loop$path, loop$mapper, loop$events, l
           loop$added = added$1;
           loop$removed = removed;
         } else {
-          let name2 = next.name;
-          let handler2 = next.handler;
+          let name2 = prev.name;
           let added$1 = prepend(next, added);
           let removed$1 = prepend(prev, removed);
-          let events$1 = add_event(events, mapper, path2, name2, handler2);
+          let events$1 = remove_event(events, path2, name2);
           loop$controlled = controlled2;
           loop$path = path2;
           loop$mapper = mapper;
@@ -3871,63 +3877,63 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
     let children2 = loop$children;
     let mapper = loop$mapper;
     let events = loop$events;
-    if (new$10 instanceof Empty) {
-      if (old instanceof Empty) {
+    if (old instanceof Empty) {
+      if (new$10 instanceof Empty) {
         return new Diff(
           new Patch(patch_index, removed, changes, children2),
           events
         );
       } else {
-        let prev = old.head;
-        let old$1 = old.tail;
-        let _block;
-        let $ = prev.key === "" || !has_key2(moved, prev.key);
-        if ($) {
-          _block = removed + 1;
-        } else {
-          _block = removed;
-        }
-        let removed$1 = _block;
-        let events$1 = remove_child(events, path2, node_index, prev);
-        loop$old = old$1;
-        loop$old_keyed = old_keyed;
-        loop$new = new$10;
-        loop$new_keyed = new_keyed;
-        loop$moved = moved;
-        loop$moved_offset = moved_offset;
-        loop$removed = removed$1;
-        loop$node_index = node_index;
-        loop$patch_index = patch_index;
-        loop$path = path2;
-        loop$changes = changes;
-        loop$children = children2;
-        loop$mapper = mapper;
-        loop$events = events$1;
+        let events$1 = add_children(
+          events,
+          mapper,
+          path2,
+          node_index,
+          new$10
+        );
+        let insert4 = insert3(new$10, node_index - moved_offset);
+        let changes$1 = prepend(insert4, changes);
+        return new Diff(
+          new Patch(patch_index, removed, changes$1, children2),
+          events$1
+        );
       }
-    } else if (old instanceof Empty) {
-      let events$1 = add_children(
-        events,
-        mapper,
-        path2,
-        node_index,
-        new$10
-      );
-      let insert4 = insert3(new$10, node_index - moved_offset);
-      let changes$1 = prepend(insert4, changes);
-      return new Diff(
-        new Patch(patch_index, removed, changes$1, children2),
-        events$1
-      );
-    } else {
-      let next = new$10.head;
+    } else if (new$10 instanceof Empty) {
       let prev = old.head;
+      let old$1 = old.tail;
+      let _block;
+      let $ = prev.key === "" || !has_key2(moved, prev.key);
+      if ($) {
+        _block = removed + 1;
+      } else {
+        _block = removed;
+      }
+      let removed$1 = _block;
+      let events$1 = remove_child(events, path2, node_index, prev);
+      loop$old = old$1;
+      loop$old_keyed = old_keyed;
+      loop$new = new$10;
+      loop$new_keyed = new_keyed;
+      loop$moved = moved;
+      loop$moved_offset = moved_offset;
+      loop$removed = removed$1;
+      loop$node_index = node_index;
+      loop$patch_index = patch_index;
+      loop$path = path2;
+      loop$changes = changes;
+      loop$children = children2;
+      loop$mapper = mapper;
+      loop$events = events$1;
+    } else {
+      let prev = old.head;
+      let next = new$10.head;
       if (prev.key !== next.key) {
-        let new_remaining = new$10.tail;
         let old_remaining = old.tail;
+        let new_remaining = new$10.tail;
         let next_did_exist = get(old_keyed, next.key);
         let prev_does_exist = has_key2(new_keyed, prev.key);
-        if (next_did_exist instanceof Ok) {
-          if (prev_does_exist) {
+        if (prev_does_exist) {
+          if (next_did_exist instanceof Ok) {
             let match = next_did_exist[0];
             let $ = has_key2(moved, prev.key);
             if ($) {
@@ -3969,18 +3975,24 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$events = events;
             }
           } else {
-            let index4 = node_index - moved_offset;
-            let changes$1 = prepend(remove2(index4), changes);
-            let events$1 = remove_child(events, path2, node_index, prev);
-            let moved_offset$1 = moved_offset - 1;
-            loop$old = old_remaining;
+            let before = node_index - moved_offset;
+            let events$1 = add_child(
+              events,
+              mapper,
+              path2,
+              node_index,
+              next
+            );
+            let insert4 = insert3(toList([next]), before);
+            let changes$1 = prepend(insert4, changes);
+            loop$old = old;
             loop$old_keyed = old_keyed;
-            loop$new = new$10;
+            loop$new = new_remaining;
             loop$new_keyed = new_keyed;
             loop$moved = moved;
-            loop$moved_offset = moved_offset$1;
+            loop$moved_offset = moved_offset + 1;
             loop$removed = removed;
-            loop$node_index = node_index;
+            loop$node_index = node_index + 1;
             loop$patch_index = patch_index;
             loop$path = path2;
             loop$changes = changes$1;
@@ -3988,25 +4000,19 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             loop$mapper = mapper;
             loop$events = events$1;
           }
-        } else if (prev_does_exist) {
-          let before = node_index - moved_offset;
-          let events$1 = add_child(
-            events,
-            mapper,
-            path2,
-            node_index,
-            next
-          );
-          let insert4 = insert3(toList([next]), before);
-          let changes$1 = prepend(insert4, changes);
-          loop$old = old;
+        } else if (next_did_exist instanceof Ok) {
+          let index4 = node_index - moved_offset;
+          let changes$1 = prepend(remove2(index4), changes);
+          let events$1 = remove_child(events, path2, node_index, prev);
+          let moved_offset$1 = moved_offset - 1;
+          loop$old = old_remaining;
           loop$old_keyed = old_keyed;
-          loop$new = new_remaining;
+          loop$new = new$10;
           loop$new_keyed = new_keyed;
           loop$moved = moved;
-          loop$moved_offset = moved_offset + 1;
+          loop$moved_offset = moved_offset$1;
           loop$removed = removed;
-          loop$node_index = node_index + 1;
+          loop$node_index = node_index;
           loop$patch_index = patch_index;
           loop$path = path2;
           loop$changes = changes$1;
@@ -4040,10 +4046,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
         if ($ instanceof Fragment) {
           let $1 = new$10.head;
           if ($1 instanceof Fragment) {
-            let next$1 = $1;
-            let new$1 = new$10.tail;
             let prev$1 = $;
             let old$1 = old.tail;
+            let next$1 = $1;
+            let new$1 = new$10.tail;
             let composed_mapper = compose_mapper(mapper, next$1.mapper);
             let child_path = add2(path2, node_index, next$1.key);
             let child = do_diff(
@@ -4064,9 +4070,9 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             );
             let _block;
             let $2 = child.patch;
-            let $3 = $2.children;
+            let $3 = $2.changes;
             if ($3 instanceof Empty) {
-              let $4 = $2.changes;
+              let $4 = $2.children;
               if ($4 instanceof Empty) {
                 let $5 = $2.removed;
                 if ($5 === 0) {
@@ -4096,10 +4102,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             loop$mapper = mapper;
             loop$events = child.events;
           } else {
-            let next$1 = $1;
-            let new_remaining = new$10.tail;
             let prev$1 = $;
             let old_remaining = old.tail;
+            let next$1 = $1;
+            let new_remaining = new$10.tail;
             let change = replace2(node_index - moved_offset, next$1);
             let _block;
             let _pipe = events;
@@ -4130,11 +4136,11 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
         } else if ($ instanceof Element) {
           let $1 = new$10.head;
           if ($1 instanceof Element) {
-            let next$1 = $1;
             let prev$1 = $;
+            let next$1 = $1;
             if (prev$1.namespace === next$1.namespace && prev$1.tag === next$1.tag) {
-              let new$1 = new$10.tail;
               let old$1 = old.tail;
+              let new$1 = new$10.tail;
               let composed_mapper = compose_mapper(
                 mapper,
                 next$1.mapper
@@ -4163,7 +4169,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               removed_attrs = $2.removed;
               events$1 = $2.events;
               let _block;
-              if (removed_attrs instanceof Empty && added_attrs instanceof Empty) {
+              if (added_attrs instanceof Empty && removed_attrs instanceof Empty) {
                 _block = empty_list;
               } else {
                 _block = toList([update(added_attrs, removed_attrs)]);
@@ -4187,9 +4193,9 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               );
               let _block$1;
               let $3 = child.patch;
-              let $4 = $3.children;
+              let $4 = $3.changes;
               if ($4 instanceof Empty) {
-                let $5 = $3.changes;
+                let $5 = $3.children;
                 if ($5 instanceof Empty) {
                   let $6 = $3.removed;
                   if ($6 === 0) {
@@ -4219,10 +4225,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$mapper = mapper;
               loop$events = child.events;
             } else {
-              let next$2 = $1;
-              let new_remaining = new$10.tail;
               let prev$2 = $;
               let old_remaining = old.tail;
+              let next$2 = $1;
+              let new_remaining = new$10.tail;
               let change = replace2(node_index - moved_offset, next$2);
               let _block;
               let _pipe = events;
@@ -4256,10 +4262,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$events = events$1;
             }
           } else {
-            let next$1 = $1;
-            let new_remaining = new$10.tail;
             let prev$1 = $;
             let old_remaining = old.tail;
+            let next$1 = $1;
+            let new_remaining = new$10.tail;
             let change = replace2(node_index - moved_offset, next$1);
             let _block;
             let _pipe = events;
@@ -4290,11 +4296,11 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
         } else if ($ instanceof Text) {
           let $1 = new$10.head;
           if ($1 instanceof Text) {
-            let next$1 = $1;
             let prev$1 = $;
+            let next$1 = $1;
             if (prev$1.content === next$1.content) {
-              let new$1 = new$10.tail;
               let old$1 = old.tail;
+              let new$1 = new$10.tail;
               loop$old = old$1;
               loop$old_keyed = old_keyed;
               loop$new = new$1;
@@ -4310,9 +4316,9 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$mapper = mapper;
               loop$events = events;
             } else {
+              let old$1 = old.tail;
               let next$2 = $1;
               let new$1 = new$10.tail;
-              let old$1 = old.tail;
               let child = new$5(
                 node_index,
                 0,
@@ -4335,10 +4341,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$events = events;
             }
           } else {
-            let next$1 = $1;
-            let new_remaining = new$10.tail;
             let prev$1 = $;
             let old_remaining = old.tail;
+            let next$1 = $1;
+            let new_remaining = new$10.tail;
             let change = replace2(node_index - moved_offset, next$1);
             let _block;
             let _pipe = events;
@@ -4369,10 +4375,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
         } else {
           let $1 = new$10.head;
           if ($1 instanceof UnsafeInnerHtml) {
-            let next$1 = $1;
-            let new$1 = new$10.tail;
             let prev$1 = $;
             let old$1 = old.tail;
+            let next$1 = $1;
+            let new$1 = new$10.tail;
             let composed_mapper = compose_mapper(mapper, next$1.mapper);
             let child_path = add2(path2, node_index, next$1.key);
             let $2 = diff_attributes(
@@ -4392,7 +4398,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             removed_attrs = $2.removed;
             events$1 = $2.events;
             let _block;
-            if (removed_attrs instanceof Empty && added_attrs instanceof Empty) {
+            if (added_attrs instanceof Empty && removed_attrs instanceof Empty) {
               _block = empty_list;
             } else {
               _block = toList([update(added_attrs, removed_attrs)]);
@@ -4434,10 +4440,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             loop$mapper = mapper;
             loop$events = events$1;
           } else {
-            let next$1 = $1;
-            let new_remaining = new$10.tail;
             let prev$1 = $;
             let old_remaining = old.tail;
+            let next$1 = $1;
+            let new_remaining = new$10.tail;
             let change = replace2(node_index - moved_offset, next$1);
             let _block;
             let _pipe = events;
@@ -6151,9 +6157,9 @@ function options() {
               let gap_y = $1.head;
               let $3 = parse(gap_x);
               let $4 = parse(gap_y);
-              if ($4 instanceof Ok && $3 instanceof Ok) {
-                let y = $4[0];
+              if ($3 instanceof Ok && $4 instanceof Ok) {
                 let x = $3[0];
+                let y = $4[0];
                 return new Ok(new ParentSetGap(x, y));
               } else {
                 return new Error(void 0);
@@ -6208,9 +6214,9 @@ function options() {
               let offset_y = $1.head;
               let $3 = parse(offset_x);
               let $4 = parse(offset_y);
-              if ($4 instanceof Ok && $3 instanceof Ok) {
-                let y = $4[0];
+              if ($3 instanceof Ok && $4 instanceof Ok) {
                 let x = $3[0];
+                let y = $4[0];
                 return new Ok(new ParentSetOffset(x, y));
               } else {
                 return new Error(void 0);
@@ -6725,34 +6731,34 @@ function emit_change(old_from, old_to, new_from, new_to, kind) {
     _block = kind;
   }
   let new_kind = _block;
-  if (new_to instanceof Some) {
-    if (new_from instanceof Some) {
-      if (old_to instanceof Some && old_from instanceof Some) {
-        let new_to$1 = new_to[0];
-        let new_from$1 = new_from[0];
-        let old_to$1 = old_to[0];
+  if (old_from instanceof Some) {
+    if (old_to instanceof Some) {
+      if (new_from instanceof Some && new_to instanceof Some) {
         let old_from$1 = old_from[0];
+        let old_to$1 = old_to[0];
+        let new_from$1 = new_from[0];
+        let new_to$1 = new_to[0];
         return emit_reconnect(
           [old_from$1, old_to$1],
           [new_from$1, new_to$1],
           new_kind
         );
       } else {
-        let new_to$1 = new_to[0];
-        let new_from$1 = new_from[0];
-        return emit_connect(new_from$1, new_to$1, new_kind);
+        let old_from$1 = old_from[0];
+        let old_to$1 = old_to[0];
+        return emit_disconnect(old_from$1, old_to$1);
       }
-    } else if (old_to instanceof Some && old_from instanceof Some) {
-      let old_to$1 = old_to[0];
-      let old_from$1 = old_from[0];
-      return emit_disconnect(old_from$1, old_to$1);
+    } else if (new_from instanceof Some && new_to instanceof Some) {
+      let new_from$1 = new_from[0];
+      let new_to$1 = new_to[0];
+      return emit_connect(new_from$1, new_to$1, new_kind);
     } else {
       return none();
     }
-  } else if (old_to instanceof Some && old_from instanceof Some) {
-    let old_to$1 = old_to[0];
-    let old_from$1 = old_from[0];
-    return emit_disconnect(old_from$1, old_to$1);
+  } else if (new_from instanceof Some && new_to instanceof Some) {
+    let new_from$1 = new_from[0];
+    let new_to$1 = new_to[0];
+    return emit_connect(new_from$1, new_to$1, new_kind);
   } else {
     return none();
   }
@@ -6867,7 +6873,7 @@ function view2(model) {
       (() => {
         let $ = model.from;
         let $1 = model.to;
-        if ($1 instanceof Some && $ instanceof Some) {
+        if ($ instanceof Some && $1 instanceof Some) {
           let translate_x = "var(--cx)";
           let translate_y = "var(--cy)";
           let transform3 = "translate(" + translate_x + ", " + translate_y + ") translate(-50%, -50%)";
@@ -7340,9 +7346,9 @@ function options3() {
               let y = $1.head;
               let $3 = parse(x);
               let $4 = parse(y);
-              if ($4 instanceof Ok && $3 instanceof Ok) {
-                let y$1 = $4[0];
+              if ($3 instanceof Ok && $4 instanceof Ok) {
                 let x$1 = $3[0];
+                let y$1 = $4[0];
                 return new Ok(new ParentSetInitialPosition(x$1, y$1));
               } else {
                 return new Error(void 0);
@@ -8270,9 +8276,9 @@ function view5(model, to_path) {
       let key = edge[0] + "-" + edge[1];
       let $1 = map_get(model.handles, edge[0]);
       let $2 = map_get(model.handles, edge[1]);
-      if ($2 instanceof Ok && $1 instanceof Ok) {
-        let to2 = $2[0];
+      if ($1 instanceof Ok && $2 instanceof Ok) {
         let from3 = $1[0];
+        let to2 = $2[0];
         let $3 = to_path(kind, from3, to2);
         let path2;
         let cx;
@@ -8351,40 +8357,38 @@ function view5(model, to_path) {
                   let kind = _block;
                   let $1 = split2(from3, ".");
                   let $2 = split2(to2, ".");
-                  if ($2 instanceof Empty) {
+                  if ($1 instanceof Empty) {
+                    return new Error(void 0);
+                  } else if ($2 instanceof Empty) {
                     return new Error(void 0);
                   } else {
-                    let $3 = $2.tail;
+                    let $3 = $1.tail;
                     if ($3 instanceof Empty) {
                       return new Error(void 0);
                     } else {
-                      let $4 = $3.tail;
+                      let $4 = $2.tail;
                       if ($4 instanceof Empty) {
-                        if ($1 instanceof Empty) {
-                          return new Error(void 0);
-                        } else {
-                          let $5 = $1.tail;
-                          if ($5 instanceof Empty) {
-                            return new Error(void 0);
-                          } else {
-                            let $6 = $5.tail;
-                            if ($6 instanceof Empty) {
-                              let to_node = $2.head;
-                              let to_handle = $3.head;
-                              let from_node2 = $1.head;
-                              let from_handle = $5.head;
-                              if (from_node2 !== "" && from_handle !== "" && to_node !== "" && to_handle !== "") {
-                                return new Ok([from3, to2, kind]);
-                              } else {
-                                return new Error(void 0);
-                              }
+                        return new Error(void 0);
+                      } else {
+                        let $5 = $3.tail;
+                        if ($5 instanceof Empty) {
+                          let $6 = $4.tail;
+                          if ($6 instanceof Empty) {
+                            let from_node2 = $1.head;
+                            let to_node = $2.head;
+                            let from_handle = $3.head;
+                            let to_handle = $4.head;
+                            if (from_node2 !== "" && from_handle !== "" && to_node !== "" && to_handle !== "") {
+                              return new Ok([from3, to2, kind]);
                             } else {
                               return new Error(void 0);
                             }
+                          } else {
+                            return new Error(void 0);
                           }
+                        } else {
+                          return new Error(void 0);
                         }
-                      } else {
-                        return new Error(void 0);
                       }
                     }
                   }
@@ -8477,14 +8481,14 @@ ${string_value}
 `;
     globalThis.Deno.stderr.writeSync(new TextEncoder().encode(string5));
   } else {
-    const string5 = `${file_line}
+    const string5 = `${file_line}${string_message}
 ${string_value}`;
     globalThis.console.log(string5);
   }
   return value;
 }
 var Echo$Inspector = class {
-  #references = /* @__PURE__ */ new Set();
+  #references = new globalThis.Set();
   #isDict(value) {
     try {
       return value instanceof Dict;
@@ -8512,24 +8516,24 @@ var Echo$Inspector = class {
     if (v === null) return "//js(null)";
     if (v === void 0) return "Nil";
     if (t === "string") return this.#string(v);
-    if (t === "bigint" || Number.isInteger(v)) return v.toString();
+    if (t === "bigint" || globalThis.Number.isInteger(v)) return v.toString();
     if (t === "number") return this.#float(v);
     if (v instanceof UtfCodepoint) return this.#utfCodepoint(v);
     if (v instanceof BitArray) return this.#bit_array(v);
-    if (v instanceof RegExp) return `//js(${v})`;
-    if (v instanceof Date) return `//js(Date("${v.toISOString()}"))`;
+    if (v instanceof globalThis.RegExp) return `//js(${v})`;
+    if (v instanceof globalThis.Date) return `//js(Date("${v.toISOString()}"))`;
     if (v instanceof globalThis.Error) return `//js(${v.toString()})`;
-    if (v instanceof Function) {
+    if (v instanceof globalThis.Function) {
       const args = [];
-      for (const i of Array(v.length).keys())
-        args.push(String.fromCharCode(i + 97));
+      for (const i of globalThis.Array(v.length).keys())
+        args.push(globalThis.String.fromCharCode(i + 97));
       return `//fn(${args.join(", ")}) { ... }`;
     }
     if (this.#references.size === this.#references.add(v).size) {
       return "//js(circular reference)";
     }
     let printed;
-    if (Array.isArray(v)) {
+    if (globalThis.Array.isArray(v)) {
       printed = `#(${v.map((v2) => this.inspect(v2)).join(", ")})`;
     } else if (v instanceof List) {
       printed = this.#list(v);
@@ -8546,9 +8550,9 @@ var Echo$Inspector = class {
     return printed;
   }
   #object(v) {
-    const name2 = Object.getPrototypeOf(v)?.constructor?.name || "Object";
+    const name2 = globalThis.Object.getPrototypeOf(v)?.constructor?.name || "Object";
     const props = [];
-    for (const k of Object.keys(v)) {
+    for (const k of globalThis.Object.keys(v)) {
       props.push(`${this.inspect(k)}: ${this.inspect(v[k])}`);
     }
     const body2 = props.length ? " " + props.join(", ") + " " : "";
@@ -8571,7 +8575,7 @@ var Echo$Inspector = class {
     return body2 + "])";
   }
   #customType(record) {
-    const props = Object.keys(record).map((label) => {
+    const props = globalThis.Object.keys(record).map((label) => {
       const value = this.inspect(record[label]);
       return isNaN(parseInt(label)) ? `${label}: ${value}` : value;
     }).join(", ");
@@ -8592,8 +8596,8 @@ var Echo$Inspector = class {
       }
       list_out += this.inspect(element4);
       if (char_out) {
-        if (Number.isInteger(element4) && element4 >= 32 && element4 <= 126) {
-          char_out += String.fromCharCode(element4);
+        if (globalThis.Number.isInteger(element4) && element4 >= 32 && element4 <= 126) {
+          char_out += globalThis.String.fromCharCode(element4);
         } else {
           char_out = null;
         }
@@ -8640,7 +8644,7 @@ var Echo$Inspector = class {
     return new_str;
   }
   #utfCodepoint(codepoint2) {
-    return `//utfcodepoint(${String.fromCodePoint(codepoint2.value)})`;
+    return `//utfcodepoint(${globalThis.String.fromCodePoint(codepoint2.value)})`;
   }
   #bit_array(bits) {
     if (bits.bitSize === 0) {
@@ -8966,10 +8970,10 @@ function options6() {
                 let $4 = parse(x);
                 let $5 = parse(y);
                 let $6 = parse(zoom);
-                if ($6 instanceof Ok && $5 instanceof Ok && $4 instanceof Ok) {
-                  let zoom$1 = $6[0];
-                  let y$1 = $5[0];
+                if ($4 instanceof Ok && $5 instanceof Ok && $6 instanceof Ok) {
                   let x$1 = $4[0];
+                  let y$1 = $5[0];
+                  let zoom$1 = $6[0];
                   return new Ok(
                     new ParentSetInitialTransform(
                       new$7(x$1, y$1, zoom$1)
@@ -10296,7 +10300,7 @@ function header_content() {
             toList([
               span(
                 toList([class$("text-2xl font-bold text-[#0000ff] block")]),
-                toList([text3("2")])
+                toList([text3("3")])
               ),
               span(
                 toList([class$("text-xs text-black font-bold")]),
@@ -10433,6 +10437,30 @@ function sites_content() {
               a(
                 toList([
                   href("https://keitepinxa.studio"),
+                  target("_blank"),
+                  class$(
+                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                  ),
+                  nodrag()
+                ]),
+                toList([text3("Visit Site")])
+              )
+            ])
+          ),
+          div(
+            toList([]),
+            toList([
+              h3(
+                toList([class$("text-lg font-bold text-[#000080] mb-2")]),
+                toList([text3("Santomot")])
+              ),
+              p(
+                toList([class$("text-black text-sm mb-2")]),
+                toList([text3("A MTG custom cards shop")])
+              ),
+              a(
+                toList([
+                  href("https://santomot.com"),
                   target("_blank"),
                   class$(
                     "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
