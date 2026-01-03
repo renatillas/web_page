@@ -13,8 +13,9 @@ import lustre/event
 import plinth/javascript/date
 import plinth/javascript/global
 import renatillas/window.{
-  type Window, type WindowAction, About, Closed, Dancing, Email, Header, Homer,
-  Libraries, Maximized, Minimized, Sites, Skull, Visible, Window, WindowPosition,
+  type Window, type WindowAction, About, Closed, Dancing, Doom, Email, Header,
+  Homer, Libraries, Maximized, Minimized, Sites, Skull, Visible, Window,
+  WindowPosition,
 }
 
 @external(javascript, "./renatillas.ffi.mjs", "initializeTouchSupport")
@@ -75,6 +76,7 @@ fn init(_flags) -> Model {
       Window(Homer, Visible, WindowPosition(x: 600.0, y: 250.0)),
       Window(Dancing, Visible, WindowPosition(x: 1200.0, y: 400.0)),
       Window(Header, Visible, WindowPosition(x: 300.0, y: 150.0)),
+      Window(Doom, Visible, WindowPosition(x: 50.0, y: 50.0)),
     ],
     start_menu_visible: False,
     current_time: format_time(),
@@ -255,6 +257,7 @@ fn create_window_element(window: Window) -> #(String, element.Element(Msg)) {
             Sites -> window.sites_content()
             Homer -> window.homer_content()
             Dancing -> window.dancing_content()
+            Doom -> window.doom_content()
           },
         ),
       )

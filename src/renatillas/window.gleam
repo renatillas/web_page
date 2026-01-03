@@ -24,6 +24,7 @@ pub type WindowName {
   Sites
   Homer
   Dancing
+  Doom
 }
 
 pub type WindowState {
@@ -175,7 +176,7 @@ pub fn email_content() -> Element(msg) {
     ],
     [
       img([
-        src("/priv/static/email.gif"),
+        src("email.gif"),
         alt("Email animation"),
         class("w-24 h-24 pixelated"),
       ]),
@@ -192,7 +193,7 @@ pub fn dancing_content() -> Element(msg) {
     ],
     [
       img([
-        src("/priv/static/dancing.gif"),
+        src("dancing.gif"),
         alt("Dancing animation"),
         class("w-24 h-24 pixelated"),
       ]),
@@ -209,7 +210,7 @@ pub fn homer_content() -> Element(msg) {
     ],
     [
       img([
-        src("/priv/static/homer.gif"),
+        src("homer.gif"),
         alt("Homer Simpson"),
         class("pixelated bg-white"),
       ]),
@@ -226,7 +227,7 @@ pub fn skull_content() -> Element(msg) {
     ],
     [
       img([
-        src("/priv/static/skull.gif"),
+        src("skull.gif"),
         alt("Skull animation"),
         class("w-20 h-20 pixelated"),
       ]),
@@ -459,6 +460,25 @@ pub fn sites_content() -> Element(msg) {
   )
 }
 
+pub fn doom_content() -> Element(msg) {
+  // Container that clips the scaled iframe to visible size
+  // Uses CSS classes for responsive scaling when window is maximized
+  div(
+    [
+      attribute.id("orb-container"),
+      class("orb-container overflow-hidden"),
+    ],
+    [
+      // Iframe at full resolution, scaled down via CSS
+      html.iframe([
+        attribute.src("https://pondering-c7c.pages.dev/"),
+        class("orb-iframe"),
+        attribute.attribute("allowfullscreen", "true"),
+      ]),
+    ],
+  )
+}
+
 pub fn create_window_with_content(
   window: Window,
   on_drag: fn(Float, Float) -> msg,
@@ -491,6 +511,7 @@ pub fn name_to_string(name: WindowName) -> String {
     Sites -> "sites"
     Homer -> "homer"
     Dancing -> "dancing"
+    Doom -> "doom"
   }
 }
 
@@ -504,6 +525,7 @@ pub fn name_to_title(name: WindowName) -> String {
     Sites -> "My Sites - Folder"
     Homer -> "homer.gif - Media Player"
     Dancing -> "dancing.gif - Media Player"
+    Doom -> "Pondering My Orb"
   }
 }
 
@@ -517,5 +539,6 @@ pub fn name_to_icon(name: WindowName) -> String {
     Sites -> "🌐"
     Homer -> "🎵"
     Dancing -> "💃"
+    Doom -> "🔮"
   }
 }

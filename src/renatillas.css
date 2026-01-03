@@ -143,6 +143,7 @@
 [data-window="sites"] { view-transition-name: window-sites; }
 [data-window="homer"] { view-transition-name: window-homer; }
 [data-window="dancing"] { view-transition-name: window-dancing; }
+[data-window="doom"] { view-transition-name: window-doom; }
 
 /* Start menu view transition */
 [data-start-menu] {
@@ -176,8 +177,26 @@
 ::view-transition-new(window-libraries),
 ::view-transition-new(window-sites),
 ::view-transition-new(window-homer),
-::view-transition-new(window-dancing) {
+::view-transition-new(window-dancing),
+::view-transition-new(window-doom) {
   animation: window-appear 0.3s ease-out forwards;
+}
+
+/* Orb/Doom container styling - base styles */
+.orb-container {
+  width: 300px !important;
+  height: 200px !important;
+  background: #000;
+  position: relative;
+  flex: none !important;
+}
+
+.orb-iframe {
+  width: 1920px;
+  height: 1080px;
+  border: none;
+  transform: scale(0.25);
+  transform-origin: top left;
 }
 
 /* Taskbar button view transitions */
@@ -661,4 +680,24 @@ a,
 .drag-handle [data-window-button] {
   pointer-events: auto !important;
   z-index: 10000;
+}
+
+/* ======================================
+   ORB MAXIMIZED STYLES
+   Must be at the end to override other rules
+   ====================================== */
+
+/* When orb window is maximized, expand the container and scale up the iframe */
+.maximized-window > .orb-container {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Scale iframe to fill the maximized container */
+.maximized-window > .orb-container .orb-iframe {
+  transform: scale(0.9) !important;
+  transform-origin: top left;
 }

@@ -14,12 +14,21 @@ target = "javascript"
 # https://gleam.run/writing-gleam/gleam-toml/.
 
 [dependencies]
-gleam_stdlib = ">= 0.44.0 and < 2.0.0"
+gleam_stdlib = ">= 0.64.0 and < 2.0.0"
 lustre = ">= 5.0.0 and < 6.0.0"
-modem = ">= 2.1.0 and < 3.0.0"
 clique = { git = "https://github.com/hayleigh-dot-dev/clique.git", ref = "main" }
 plinth = ">= 0.7.2 and < 1.0.0"
+# Tiramisu 3D game engine and dependencies
+vec = ">= 3.0.1 and < 4.0.0"
+gleam_community_maths = ">= 2.0.0 and < 3.0.0"
+gleam_time = ">= 1.6.0 and < 2.0.0"
+quaterni = ">= 1.0.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
-lustre_dev_tools = ">= 1.9.2 and < 2.0.0"
+lustre_dev_tools = ">= 2.3.2 and < 3.0.0"
+
+[tools.lustre.html]
+scripts = [
+  { type = "importmap", content = "{ \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js\", \"three/addons/\": \"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/\", \"@dimforge/rapier3d-compat\": \"https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.2/+esm\" } }" }
+]
