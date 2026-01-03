@@ -1,3 +1,56 @@
+// View Transitions API support
+export function startViewTransition(callback) {
+  if (document.startViewTransition) {
+    return document.startViewTransition(() => {
+      callback();
+    });
+  } else {
+    // Fallback for browsers that don't support View Transitions
+    callback();
+    return null;
+  }
+}
+
+// Check if View Transitions API is supported
+export function supportsViewTransitions() {
+  return !!document.startViewTransition;
+}
+
+// Initialize view transition support with Lustre
+export function initializeViewTransitions() {
+  if (!document.startViewTransition) {
+    console.log('View Transitions API not supported, using fallback animations');
+    return;
+  }
+
+  // Observe DOM changes for view transition triggers
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      // Handle added/removed nodes (windows appearing/disappearing)
+      if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+        // The CSS view-transition-name properties handle the animations
+      }
+    }
+  });
+
+  // Start observing when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const root = document.querySelector('[data-clique-root]');
+      if (root) {
+        observer.observe(root, { childList: true, subtree: true });
+      }
+    });
+  } else {
+    const root = document.querySelector('[data-clique-root]');
+    if (root) {
+      observer.observe(root, { childList: true, subtree: true });
+    }
+  }
+
+  console.log('View Transitions API initialized');
+}
+
 // Touch support for clique-based dragging and viewport panning
 export function initializeTouchSupport() {
   

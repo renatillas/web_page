@@ -72,16 +72,17 @@ fn create_window(config: WindowConfig(msg)) -> Element(msg) {
         True -> "select-none"
         False -> "select-none touch-draggable"
       }),
+      attribute.attribute("data-window", config.id),
     ],
     [
       div(
         [
           class(case config.is_maximized {
             True ->
-              "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-screen h-screen max-w-none "
+              "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] maximized-window "
               <> config.width
             False ->
-              "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] "
+              "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] animate-window-appear "
               <> config.width
           }),
           event.on_click(config.on_click()),
@@ -123,8 +124,9 @@ fn create_window_controls(
     button(
       [
         class(
-          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
+          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white window-control-btn",
         ),
+        attribute.attribute("data-window-button", "minimize"),
         node.nodrag(),
         event.on_click(on_action(Minimize)),
       ],
@@ -133,8 +135,9 @@ fn create_window_controls(
     button(
       [
         class(
-          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
+          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white window-control-btn",
         ),
+        attribute.attribute("data-window-button", "maximize"),
         node.nodrag(),
         event.on_click(on_action(Maximize)),
       ],
@@ -148,8 +151,9 @@ fn create_window_controls(
     button(
       [
         class(
-          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white ",
+          "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white window-control-btn",
         ),
+        attribute.attribute("data-window-button", "close"),
         node.nodrag(),
         event.on_click(on_action(Close)),
       ],
@@ -253,7 +257,7 @@ pub fn header_content() -> Element(msg) {
         [
           div([class("text-center")], [
             span([class("text-2xl font-bold text-[#0000ff] block")], [
-              text("17+"),
+              text("28+"),
             ]),
             span([class("text-xs text-black font-bold")], [
               text("LIBRARIES"),
@@ -261,7 +265,7 @@ pub fn header_content() -> Element(msg) {
           ]),
           div([class("text-center")], [
             span([class("text-2xl font-bold text-[#0000ff] block")], [
-              text("3"),
+              text("4"),
             ]),
             span([class("text-xs text-black font-bold")], [
               text("PROD SITES"),
@@ -309,12 +313,46 @@ pub fn libraries_content() -> Element(msg) {
     ],
     [
       h3([class("text-lg font-bold text-[#000080] mb-3")], [
-        text("17+ Open Source Libraries"),
+        text("28+ Open Source Libraries"),
       ]),
-      p([class("text-black leading-relaxed text-sm mb-4")], [
+      p([class("text-black leading-relaxed text-sm mb-3")], [
         text(
-          "Crafted with precision using Gleam's powerful type system. Each library solves real problems while maintaining elegant APIs and comprehensive documentation.",
+          "From game engines to message queues, I build tools that push Gleam's boundaries:",
         ),
+      ]),
+      div([class("text-xs text-black mb-3 space-y-1")], [
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("tiramisu")]),
+          text(" - Type-safe 3D game engine"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("eventsourcing")]),
+          text(" - Event-sourced systems"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("carotte")]),
+          text(" - RabbitMQ client"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("franz")]),
+          text(" - Kafka integration"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("protozoa")]),
+          text(" - Protocol Buffers"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("clockwork")]),
+          text(" - Cron scheduling"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("g18n")]),
+          text(" - Internationalization"),
+        ]),
+        p([], [
+          span([class("font-bold text-[#000080]")], [text("vapour")]),
+          text(" - Steamworks SDK bindings"),
+        ]),
       ]),
       a(
         [
@@ -325,7 +363,7 @@ pub fn libraries_content() -> Element(msg) {
           ),
           node.nodrag(),
         ],
-        [text("Github")],
+        [text("View All on Github")],
       ),
     ],
   )
@@ -388,6 +426,25 @@ pub fn sites_content() -> Element(msg) {
           a(
             [
               href("https://santomot.com"),
+              target("_blank"),
+              class(
+                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+              ),
+              node.nodrag(),
+            ],
+            [text("Visit Site")],
+          ),
+        ]),
+        div([], [
+          h3([class("text-lg font-bold text-[#000080] mb-2")], [
+            text("Mikaela Abril"),
+          ]),
+          p([class("text-black text-sm mb-2")], [
+            text("Portfolio for a talented graphic designer"),
+          ]),
+          a(
+            [
+              href("https://mikaelaabrildz.github.io"),
               target("_blank"),
               class(
                 "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",

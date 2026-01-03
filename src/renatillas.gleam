@@ -20,9 +20,13 @@ import renatillas/window.{
 @external(javascript, "./renatillas.ffi.mjs", "initializeTouchSupport")
 fn initialize_touch_support() -> Nil
 
+@external(javascript, "./renatillas.ffi.mjs", "initializeViewTransitions")
+fn initialize_view_transitions() -> Nil
+
 pub fn main() -> Nil {
   let assert Ok(_) = clique.register()
   initialize_touch_support()
+  initialize_view_transitions()
   let app = lustre.simple(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", Nil)
 
@@ -106,6 +110,7 @@ fn update(model: Model, msg: Msg) -> Model {
         window.Maximize -> {
           let assert Ok(old_window) =
             list.find(model.window_states, fn(w) { w.name == name })
+          let is_maximizing = old_window.state != Maximized
           let new_window =
             Window(
               name,
@@ -117,7 +122,16 @@ fn update(model: Model, msg: Msg) -> Model {
             )
           let old_windows =
             list.filter(model.window_states, fn(w) { w.name != name })
-          Model(..model, window_states: [new_window, ..old_windows])
+          // Reset viewport transform when maximizing to ensure window covers screen
+          let new_transform = case is_maximizing {
+            True -> #(0.0, 0.0, 1.0)
+            False -> model.transform
+          }
+          Model(
+            ..model,
+            window_states: [new_window, ..old_windows],
+            transform: new_transform,
+          )
         }
         window.Close -> {
           let assert Ok(old_window) =
@@ -193,8 +207,9 @@ fn view(model: Model) -> element.Element(Msg) {
             div(
               [
                 class(
-                  "fixed bottom-12 left-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto",
+                  "fixed bottom-12 left-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto animate-menu-appear",
                 ),
+                attribute.attribute("data-start-menu", "true"),
               ],
               [
                 div(
@@ -272,6 +287,7 @@ fn task_bar(model: Model) {
             class(
               "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm hover:bg-[#009000] active:border-t-[#404040] active:border-l-[#404040] active:border-r-white active:border-b-white",
             ),
+            attribute.attribute("data-start-button", "true"),
             event.on_click(ToggleStartMenu),
           ],
           [span([class("text-lg")], [text("🟢")]), text("Start")],
@@ -318,6 +334,8 @@ fn create_taskbar_button(
       class(
         "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-2 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white max-w-32 truncate",
       ),
+      attribute.attribute("data-minimized-window", "true"),
+      attribute.attribute("data-taskbar-button", "true"),
       event.on_click(RestoreWindow(window)),
     ],
     [span([class("mr-1")], [text(icon)]), text(title)],

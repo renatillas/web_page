@@ -9840,6 +9840,32 @@ function minutes(d) {
 }
 
 // build/dev/javascript/renatillas/renatillas.ffi.mjs
+function initializeViewTransitions() {
+  if (!document.startViewTransition) {
+    console.log("View Transitions API not supported, using fallback animations");
+    return;
+  }
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+      }
+    }
+  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const root9 = document.querySelector("[data-clique-root]");
+      if (root9) {
+        observer.observe(root9, { childList: true, subtree: true });
+      }
+    });
+  } else {
+    const root9 = document.querySelector("[data-clique-root]");
+    if (root9) {
+      observer.observe(root9, { childList: true, subtree: true });
+    }
+  }
+  console.log("View Transitions API initialized");
+}
 function initializeTouchSupport() {
   function handleButtonClicks(e) {
     if (e.target.tagName === "CLIQUE-NODE") {
@@ -10051,8 +10077,9 @@ function create_window_controls(on_action, is_maximized) {
       button(
         toList([
           class$(
-            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white "
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white window-control-btn"
           ),
+          attribute2("data-window-button", "minimize"),
           nodrag(),
           on_click(on_action(new Minimize()))
         ]),
@@ -10061,8 +10088,9 @@ function create_window_controls(on_action, is_maximized) {
       button(
         toList([
           class$(
-            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white "
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white window-control-btn"
           ),
+          attribute2("data-window-button", "maximize"),
           nodrag(),
           on_click(on_action(new Maximize()))
         ]),
@@ -10081,8 +10109,9 @@ function create_window_controls(on_action, is_maximized) {
       button(
         toList([
           class$(
-            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white "
+            "w-5 h-4 bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] text-xs flex items-center justify-center text-black font-bold hover:bg-[#ffffff] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white window-control-btn"
           ),
+          attribute2("data-window-button", "close"),
           nodrag(),
           on_click(on_action(new Close()))
         ]),
@@ -10136,7 +10165,8 @@ function create_window(config) {
             return "select-none touch-draggable";
           }
         })()
-      )
+      ),
+      attribute2("data-window", config.id)
     ]),
     toList([
       div(
@@ -10145,9 +10175,9 @@ function create_window(config) {
             (() => {
               let $ = config.is_maximized;
               if ($) {
-                return "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-screen h-screen max-w-none " + config.width;
+                return "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] maximized-window " + config.width;
               } else {
-                return "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] " + config.width;
+                return "bg-[#c0c0c0] border-2 border-t-white max-w-sm border-l-white border-r-[#808080] border-b-[#808080] animate-window-appear " + config.width;
               }
             })()
           ),
@@ -10287,7 +10317,7 @@ function header_content() {
             toList([
               span(
                 toList([class$("text-2xl font-bold text-[#0000ff] block")]),
-                toList([text3("17+")])
+                toList([text3("28+")])
               ),
               span(
                 toList([class$("text-xs text-black font-bold")]),
@@ -10300,7 +10330,7 @@ function header_content() {
             toList([
               span(
                 toList([class$("text-2xl font-bold text-[#0000ff] block")]),
-                toList([text3("3")])
+                toList([text3("4")])
               ),
               span(
                 toList([class$("text-xs text-black font-bold")]),
@@ -10360,13 +10390,98 @@ function libraries_content() {
     toList([
       h3(
         toList([class$("text-lg font-bold text-[#000080] mb-3")]),
-        toList([text3("17+ Open Source Libraries")])
+        toList([text3("28+ Open Source Libraries")])
       ),
       p(
-        toList([class$("text-black leading-relaxed text-sm mb-4")]),
+        toList([class$("text-black leading-relaxed text-sm mb-3")]),
         toList([
           text3(
-            "Crafted with precision using Gleam's powerful type system. Each library solves real problems while maintaining elegant APIs and comprehensive documentation."
+            "From game engines to message queues, I build tools that push Gleam's boundaries:"
+          )
+        ])
+      ),
+      div(
+        toList([class$("text-xs text-black mb-3 space-y-1")]),
+        toList([
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("tiramisu")])
+              ),
+              text3(" - Type-safe 3D game engine")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("eventsourcing")])
+              ),
+              text3(" - Event-sourced systems")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("carotte")])
+              ),
+              text3(" - RabbitMQ client")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("franz")])
+              ),
+              text3(" - Kafka integration")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("protozoa")])
+              ),
+              text3(" - Protocol Buffers")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("clockwork")])
+              ),
+              text3(" - Cron scheduling")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("g18n")])
+              ),
+              text3(" - Internationalization")
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              span(
+                toList([class$("font-bold text-[#000080]")]),
+                toList([text3("vapour")])
+              ),
+              text3(" - Steamworks SDK bindings")
+            ])
           )
         ])
       ),
@@ -10379,7 +10494,7 @@ function libraries_content() {
           ),
           nodrag()
         ]),
-        toList([text3("Github")])
+        toList([text3("View All on Github")])
       )
     ])
   );
@@ -10461,6 +10576,30 @@ function sites_content() {
               a(
                 toList([
                   href("https://santomot.com"),
+                  target("_blank"),
+                  class$(
+                    "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                  ),
+                  nodrag()
+                ]),
+                toList([text3("Visit Site")])
+              )
+            ])
+          ),
+          div(
+            toList([]),
+            toList([
+              h3(
+                toList([class$("text-lg font-bold text-[#000080] mb-2")]),
+                toList([text3("Mikaela Abril")])
+              ),
+              p(
+                toList([class$("text-black text-sm mb-2")]),
+                toList([text3("Portfolio for a talented graphic designer")])
+              ),
+              a(
+                toList([
+                  href("https://mikaelaabrildz.github.io"),
                   target("_blank"),
                   class$(
                     "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
@@ -10668,15 +10807,15 @@ function update10(model, msg) {
           "let_assert",
           FILEPATH,
           "renatillas",
-          99,
+          103,
           "update",
           "Pattern match failed, no pattern matched the value.",
           {
             value: $,
-            start: 3077,
-            end: 3173,
-            pattern_start: 3088,
-            pattern_end: 3102
+            start: 3225,
+            end: 3321,
+            pattern_start: 3236,
+            pattern_end: 3250
           }
         );
       }
@@ -10709,18 +10848,19 @@ function update10(model, msg) {
           "let_assert",
           FILEPATH,
           "renatillas",
-          107,
+          111,
           "update",
           "Pattern match failed, no pattern matched the value.",
           {
             value: $,
-            start: 3463,
-            end: 3559,
-            pattern_start: 3474,
-            pattern_end: 3488
+            start: 3611,
+            end: 3707,
+            pattern_start: 3622,
+            pattern_end: 3636
           }
         );
       }
+      let is_maximizing = !isEqual(old_window.state, new Maximized());
       let new_window = new Window(
         name2,
         (() => {
@@ -10739,8 +10879,15 @@ function update10(model, msg) {
           return !isEqual(w.name, name2);
         }
       );
+      let _block;
+      if (is_maximizing) {
+        _block = [0, 0, 1];
+      } else {
+        _block = model.transform;
+      }
+      let new_transform = _block;
       return new Model7(
-        model.transform,
+        new_transform,
         prepend(new_window, old_windows),
         model.start_menu_visible,
         model.current_time,
@@ -10761,15 +10908,15 @@ function update10(model, msg) {
           "let_assert",
           FILEPATH,
           "renatillas",
-          123,
+          137,
           "update",
           "Pattern match failed, no pattern matched the value.",
           {
             value: $,
-            start: 4013,
-            end: 4109,
-            pattern_start: 4024,
-            pattern_end: 4038
+            start: 4518,
+            end: 4614,
+            pattern_start: 4529,
+            pattern_end: 4543
           }
         );
       }
@@ -10804,15 +10951,15 @@ function update10(model, msg) {
         "let_assert",
         FILEPATH,
         "renatillas",
-        90,
+        94,
         "update",
         "Pattern match failed, no pattern matched the value.",
         {
           value: $,
-          start: 2701,
-          end: 2797,
-          pattern_start: 2712,
-          pattern_end: 2730
+          start: 2849,
+          end: 2945,
+          pattern_start: 2860,
+          pattern_end: 2878
         }
       );
     }
@@ -10926,6 +11073,8 @@ function create_taskbar_button(title2, icon, window2) {
       class$(
         "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-2 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white max-w-32 truncate"
       ),
+      attribute2("data-minimized-window", "true"),
+      attribute2("data-taskbar-button", "true"),
       on_click(new RestoreWindow(window2))
     ]),
     toList([span(toList([class$("mr-1")]), toList([text2(icon)])), text2(title2)])
@@ -10983,6 +11132,7 @@ function task_bar(model) {
               class$(
                 "bg-[#008000] border-2 border-t-white border-l-white border-r-[#404040] border-b-[#404040] px-3 py-1 flex items-center gap-2 text-white font-bold text-sm hover:bg-[#009000] active:border-t-[#404040] active:border-l-[#404040] active:border-r-white active:border-b-white"
               ),
+              attribute2("data-start-button", "true"),
               on_click(new ToggleStartMenu())
             ]),
             toList([
@@ -11074,8 +11224,9 @@ function view7(model) {
               return div(
                 toList([
                   class$(
-                    "fixed bottom-12 left-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto"
-                  )
+                    "fixed bottom-12 left-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] shadow-lg z-50 min-w-48 max-h-64 overflow-y-auto animate-menu-appear"
+                  ),
+                  attribute2("data-start-menu", "true")
                 ]),
                 toList([
                   div(
@@ -11109,13 +11260,14 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      24,
+      27,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 751, end: 787, pattern_start: 762, pattern_end: 767 }
+      { value: $, start: 867, end: 903, pattern_start: 878, pattern_end: 883 }
     );
   }
   initializeTouchSupport();
+  initializeViewTransitions();
   let app = simple(init9, update10, view7);
   let $1 = start3(app, "#app", void 0);
   if (!($1 instanceof Ok)) {
@@ -11123,10 +11275,16 @@ function main() {
       "let_assert",
       FILEPATH,
       "renatillas",
-      27,
+      31,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $1, start: 865, end: 914, pattern_start: 876, pattern_end: 881 }
+      {
+        value: $1,
+        start: 1013,
+        end: 1062,
+        pattern_start: 1024,
+        pattern_end: 1029
+      }
     );
   }
   return void 0;

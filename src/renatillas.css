@@ -1,6 +1,339 @@
 @import "tailwindcss";
 @import 'tailwindcss';
 
+/* ======================================
+   VIEW TRANSITIONS API
+   ====================================== */
+
+/* Enable View Transitions */
+@view-transition {
+  navigation: auto;
+}
+
+/* Default view transition animation - smooth crossfade */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
+  animation-timing-function: ease-in-out;
+}
+
+/* Window transition animations */
+::view-transition-old(window-*),
+::view-transition-new(window-*) {
+  animation-duration: 0.3s;
+}
+
+/* Window appear animation - scale only, no translate to avoid position conflicts */
+@keyframes window-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Window disappear animation - scale only, no translate to avoid position conflicts */
+@keyframes window-disappear {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+/* Window minimize animation - shrink effect */
+@keyframes window-minimize {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+/* Window restore animation - grow effect */
+@keyframes window-restore {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Window maximize animation */
+@keyframes window-maximize {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
+/* Start menu slide animation */
+@keyframes menu-slide-up {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+}
+
+@keyframes menu-slide-down {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* Button press animation */
+@keyframes button-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Link hover glow */
+@keyframes link-glow {
+  0% {
+    box-shadow: 0 0 0 rgba(0, 0, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(0, 0, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(0, 0, 255, 0);
+  }
+}
+
+/* Apply view transition names to windows */
+[data-window="email"] { view-transition-name: window-email; }
+[data-window="skull"] { view-transition-name: window-skull; }
+[data-window="portfolio"] { view-transition-name: window-portfolio; }
+[data-window="about-me"] { view-transition-name: window-about; }
+[data-window="libraries"] { view-transition-name: window-libraries; }
+[data-window="sites"] { view-transition-name: window-sites; }
+[data-window="homer"] { view-transition-name: window-homer; }
+[data-window="dancing"] { view-transition-name: window-dancing; }
+
+/* Start menu view transition */
+[data-start-menu] {
+  view-transition-name: start-menu;
+}
+
+::view-transition-old(start-menu) {
+  animation: menu-slide-down 0.2s ease-out forwards;
+}
+
+::view-transition-new(start-menu) {
+  animation: menu-slide-up 0.2s ease-out forwards;
+}
+
+/* Window view transitions */
+::view-transition-old(window-email),
+::view-transition-old(window-skull),
+::view-transition-old(window-portfolio),
+::view-transition-old(window-about),
+::view-transition-old(window-libraries),
+::view-transition-old(window-sites),
+::view-transition-old(window-homer),
+::view-transition-old(window-dancing) {
+  animation: window-disappear 0.3s ease-out forwards;
+}
+
+::view-transition-new(window-email),
+::view-transition-new(window-skull),
+::view-transition-new(window-portfolio),
+::view-transition-new(window-about),
+::view-transition-new(window-libraries),
+::view-transition-new(window-sites),
+::view-transition-new(window-homer),
+::view-transition-new(window-dancing) {
+  animation: window-appear 0.3s ease-out forwards;
+}
+
+/* Taskbar button view transitions */
+[data-taskbar-button] {
+  view-transition-name: taskbar-button;
+}
+
+::view-transition-old(taskbar-button),
+::view-transition-new(taskbar-button) {
+  animation-duration: 0.15s;
+}
+
+/* Interactive element transitions */
+button, a, [data-window-button] {
+  transition: transform 0.1s ease-out,
+              box-shadow 0.15s ease-out,
+              background-color 0.1s ease-out;
+}
+
+button:active, a:active, [data-window-button]:active {
+  animation: button-press 0.15s ease-out;
+}
+
+/* Window control buttons hover effect */
+.window-control-btn {
+  transition: background-color 0.1s ease-out,
+              transform 0.1s ease-out;
+}
+
+.window-control-btn:hover {
+  transform: scale(1.1);
+}
+
+.window-control-btn:active {
+  transform: scale(0.9);
+}
+
+/* Start button pulse animation */
+@keyframes start-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 128, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(0, 128, 0, 0);
+  }
+}
+
+[data-start-button]:hover {
+  animation: start-pulse 1s ease-in-out infinite;
+}
+
+/* Taskbar item slide-in animation */
+@keyframes taskbar-slide-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.8);
+    transform-origin: left;
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+[data-minimized-window] {
+  animation: taskbar-slide-in 0.2s ease-out;
+}
+
+/* Window focus glow effect */
+@keyframes window-focus-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 128, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 15px 2px rgba(0, 0, 128, 0.2);
+  }
+}
+
+.window-focused {
+  animation: window-focus-glow 0.3s ease-out forwards;
+}
+
+/* Smooth transitions for all interactive elements */
+.interactive-transition {
+  transition: all 0.2s ease-out;
+}
+
+/* Initial window appearance animation class */
+.animate-window-appear {
+  animation: window-appear 0.3s ease-out;
+}
+
+/* Menu appear animation class */
+.animate-menu-appear {
+  animation: menu-slide-up 0.2s ease-out;
+}
+
+/* Link hover effects */
+a:hover {
+  animation: link-glow 0.3s ease-out;
+}
+
+/* Smooth hover transition for all buttons */
+button:hover {
+  transition: all 0.15s ease-out;
+}
+
+/* ======================================
+   END VIEW TRANSITIONS
+   ====================================== */
+
+/* Maximized window styling */
+.maximized-window {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh - 48px) !important;
+  max-width: none !important;
+  z-index: 40 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Title bar stays fixed height */
+.maximized-window > .drag-handle {
+  flex-shrink: 0 !important;
+}
+
+/* Content area fills remaining space */
+.maximized-window > *:not(.drag-handle) {
+  flex: 1 !important;
+  overflow: auto !important;
+  margin: 8px !important;
+  width: calc(100% - 16px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* GIF/image containers expand to fill space */
+.maximized-window > *:not(.drag-handle):has(img) {
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Images expand when maximized */
+.maximized-window img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  flex: 1 !important;
+  object-fit: contain !important;
+}
+
 @keyframes shimmer {
   0% {
     transform: translateX(-100%) skewX(-12deg);
