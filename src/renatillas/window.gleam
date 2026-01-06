@@ -441,7 +441,7 @@ pub fn sites_content() -> Element(msg) {
             text("Mikaela Abril"),
           ]),
           p([class("text-black text-sm mb-2")], [
-            text("Portfolio for a talented graphic designer"),
+            text("Portfolio for a talented video game engineer"),
           ]),
           a(
             [
