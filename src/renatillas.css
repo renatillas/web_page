@@ -23,51 +23,51 @@
   animation-duration: 0.3s;
 }
 
-/* Window appear animation - scale only, no translate to avoid position conflicts */
+/* Window appear animation - scale and translate from taskbar */
 @keyframes window-appear {
   from {
     opacity: 0;
-    transform: scale(0.85);
+    transform: scale(0.2) translateY(100vh);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
-/* Window disappear animation - scale only, no translate to avoid position conflicts */
+/* Window disappear animation - scale and translate to taskbar */
 @keyframes window-disappear {
   from {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
   to {
     opacity: 0;
-    transform: scale(0.85);
+    transform: scale(0.2) translateY(100vh);
   }
 }
 
-/* Window minimize animation - shrink effect */
+/* Window minimize animation - shrink and move to taskbar */
 @keyframes window-minimize {
   from {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
   to {
     opacity: 0;
-    transform: scale(0.3);
+    transform: scale(0.2) translateY(100vh);
   }
 }
 
-/* Window restore animation - grow effect */
+/* Window restore animation - grow and move from taskbar */
 @keyframes window-restore {
   from {
     opacity: 0;
-    transform: scale(0.3);
+    transform: scale(0.2) translateY(100vh);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 

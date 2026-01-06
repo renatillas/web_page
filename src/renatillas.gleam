@@ -6,9 +6,9 @@ import gleam/list
 import gleam/option.{type Option, None}
 import gleam/string
 import lustre
-import lustre/attribute.{class, href, rel}
+import lustre/attribute.{class}
 import lustre/element.{text}
-import lustre/element/html.{body, button, div, head, html, link, p, span, title}
+import lustre/element/html.{body, button, div, head, html, p, span, title}
 import lustre/event
 import plinth/javascript/date
 import plinth/javascript/global
@@ -68,15 +68,15 @@ fn init(_flags) -> Model {
   Model(
     transform: #(0.0, 0.0, 0.8),
     window_states: [
-      Window(Skull, Visible, WindowPosition(x: 1100.0, y: 10.0)),
-      Window(Email, Visible, WindowPosition(x: 1200.0, y: 120.0)),
-      Window(About, Visible, WindowPosition(x: 10.0, y: 320.0)),
-      Window(Libraries, Visible, WindowPosition(x: 0.0, y: 530.0)),
-      Window(Sites, Visible, WindowPosition(x: 450.0, y: 0.0)),
-      Window(Homer, Visible, WindowPosition(x: 600.0, y: 250.0)),
-      Window(Dancing, Visible, WindowPosition(x: 1200.0, y: 400.0)),
-      Window(Header, Visible, WindowPosition(x: 300.0, y: 150.0)),
+      Window(Header, Visible, WindowPosition(x: 750.0, y: 350.0)),
       Window(Doom, Visible, WindowPosition(x: 50.0, y: 50.0)),
+      Window(Sites, Visible, WindowPosition(x: 400.0, y: 30.0)),
+      Window(Skull, Visible, WindowPosition(x: 1350.0, y: 50.0)),
+      Window(Email, Visible, WindowPosition(x: 1500.0, y: 200.0)),
+      Window(About, Visible, WindowPosition(x: 50.0, y: 350.0)),
+      Window(Libraries, Visible, WindowPosition(x: 50.0, y: 700.0)),
+      Window(Homer, Visible, WindowPosition(x: 1200.0, y: 450.0)),
+      Window(Dancing, Visible, WindowPosition(x: 1400.0, y: 650.0)),
     ],
     start_menu_visible: False,
     current_time: format_time(),
@@ -167,12 +167,6 @@ fn view(model: Model) -> element.Element(Msg) {
   html([], [
     head([], [
       title([], "renata amutio - gleam developer"),
-      link([
-        rel("stylesheet"),
-        href(
-          "https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap",
-        ),
-      ]),
     ]),
     body(
       [
