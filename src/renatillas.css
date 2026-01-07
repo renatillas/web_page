@@ -2,6 +2,537 @@
 @import 'tailwindcss';
 
 /* ======================================
+   Y2K FULL CHAOS MODE
+   ====================================== */
+
+/* Google Fonts - VT323 for that authentic retro feel */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* CSS Custom Properties for Y2K theming */
+:root {
+  --y2k-pink: #ff69b4;
+  --y2k-cyan: #00ffff;
+  --y2k-lime: #32cd32;
+  --y2k-purple: #9400d3;
+  --y2k-orange: #ff8c00;
+  --y2k-yellow: #ffff00;
+  --crt-glow: rgba(0, 255, 255, 0.08);
+  --scanline-opacity: 0.03;
+  --noise-opacity: 0.015;
+}
+
+/* ======================================
+   CRT SCANLINE EFFECT
+   ====================================== */
+
+/* Global CRT overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, var(--scanline-opacity)) 0px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  animation: scanline-scroll 8s linear infinite;
+}
+
+/* CRT screen vignette - subtle darkening at edges */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9997;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+}
+
+@keyframes scanline-scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100vh;
+  }
+}
+
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.98; }
+  25%, 75% { opacity: 0.99; }
+}
+
+/* Noise texture overlay - very subtle film grain */
+.crt-noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9996;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  animation: noise-shift 2s steps(5) infinite;
+}
+
+@keyframes noise-shift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-0.5%, 0.5%); }
+  50% { transform: translate(0.5%, -0.5%); }
+  75% { transform: translate(-0.5%, -0.5%); }
+}
+
+/* ======================================
+   RAINBOW GRADIENT ANIMATIONS
+   ====================================== */
+
+@keyframes rainbow-shift {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes rainbow-text {
+  0% { color: var(--y2k-pink); }
+  14% { color: var(--y2k-orange); }
+  28% { color: var(--y2k-yellow); }
+  42% { color: var(--y2k-lime); }
+  57% { color: var(--y2k-cyan); }
+  71% { color: #6495ed; }
+  85% { color: var(--y2k-purple); }
+  100% { color: var(--y2k-pink); }
+}
+
+@keyframes rainbow-border {
+  0% { border-color: var(--y2k-pink); }
+  14% { border-color: var(--y2k-orange); }
+  28% { border-color: var(--y2k-yellow); }
+  42% { border-color: var(--y2k-lime); }
+  57% { border-color: var(--y2k-cyan); }
+  71% { border-color: #6495ed; }
+  85% { border-color: var(--y2k-purple); }
+  100% { border-color: var(--y2k-pink); }
+}
+
+@keyframes rainbow-glow {
+  0% { box-shadow: 0 0 20px var(--y2k-pink), inset 0 0 10px rgba(255, 105, 180, 0.1); }
+  14% { box-shadow: 0 0 20px var(--y2k-orange), inset 0 0 10px rgba(255, 140, 0, 0.1); }
+  28% { box-shadow: 0 0 20px var(--y2k-yellow), inset 0 0 10px rgba(255, 255, 0, 0.1); }
+  42% { box-shadow: 0 0 20px var(--y2k-lime), inset 0 0 10px rgba(50, 205, 50, 0.1); }
+  57% { box-shadow: 0 0 20px var(--y2k-cyan), inset 0 0 10px rgba(0, 255, 255, 0.1); }
+  71% { box-shadow: 0 0 20px #6495ed, inset 0 0 10px rgba(100, 149, 237, 0.1); }
+  85% { box-shadow: 0 0 20px var(--y2k-purple), inset 0 0 10px rgba(148, 0, 211, 0.1); }
+  100% { box-shadow: 0 0 20px var(--y2k-pink), inset 0 0 10px rgba(255, 105, 180, 0.1); }
+}
+
+/* Holographic shimmer effect */
+@keyframes holographic {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.rainbow-text {
+  animation: rainbow-text 3s linear infinite;
+}
+
+.rainbow-border {
+  animation: rainbow-border 3s linear infinite;
+}
+
+.rainbow-glow {
+  animation: rainbow-glow 3s linear infinite;
+}
+
+.holographic {
+  background: linear-gradient(
+    135deg,
+    var(--y2k-pink) 0%,
+    var(--y2k-cyan) 25%,
+    var(--y2k-lime) 50%,
+    var(--y2k-purple) 75%,
+    var(--y2k-pink) 100%
+  );
+  background-size: 400% 400%;
+  animation: holographic 3s ease infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ======================================
+   SPARKLE EFFECTS
+   ====================================== */
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.sparkle-container {
+  position: relative;
+}
+
+.sparkle-container::before,
+.sparkle-container::after {
+  content: "✦";
+  position: absolute;
+  font-size: 12px;
+  color: var(--y2k-yellow);
+  animation: twinkle 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.sparkle-container::before {
+  top: -8px;
+  right: -8px;
+  animation-delay: 0s;
+}
+
+.sparkle-container::after {
+  bottom: -8px;
+  left: -8px;
+  animation-delay: 0.75s;
+}
+
+/* ======================================
+   BOUNCY MICRO-INTERACTIONS
+   ====================================== */
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes wobble {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(-3deg); }
+  30% { transform: rotate(2deg); }
+  45% { transform: rotate(-1deg); }
+  60% { transform: rotate(0.5deg); }
+  75% { transform: rotate(-0.25deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes jelly {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(0.95, 1.05); }
+  50% { transform: scale(1.05, 0.95); }
+  75% { transform: scale(0.98, 1.02); }
+  100% { transform: scale(1, 1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--y2k-cyan), 0 0 10px var(--y2k-cyan);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--y2k-cyan), 0 0 30px var(--y2k-pink), 0 0 40px var(--y2k-cyan);
+  }
+}
+
+/* Spring physics for buttons */
+@keyframes spring-press {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.85); }
+  50% { transform: scale(1.1); }
+  70% { transform: scale(0.97); }
+  85% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.wobble {
+  animation: wobble 0.8s ease-in-out;
+}
+
+.jelly:hover {
+  animation: jelly 0.5s ease-in-out;
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ======================================
+   MARQUEE TEXT (CLASSIC Y2K!)
+   ====================================== */
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee {
+  display: inline-block;
+  animation: marquee 15s linear infinite;
+}
+
+.marquee-reverse {
+  display: inline-block;
+  animation: marquee-reverse 15s linear infinite;
+}
+
+/* ======================================
+   ENHANCED WINDOW EFFECTS
+   ====================================== */
+
+/* Window chrome glow on focus */
+[data-clique-node]:first-child > div {
+  animation: rainbow-glow 5s linear infinite;
+}
+
+/* Title bar shimmer */
+.drag-handle {
+  position: relative;
+  overflow: hidden;
+}
+
+.drag-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: title-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes title-shimmer {
+  0% { left: -100%; }
+  50%, 100% { left: 150%; }
+}
+
+/* VHS tracking effect on windows */
+@keyframes vhs-tracking {
+  0% {
+    clip-path: inset(0 0 0 0);
+  }
+  5% {
+    clip-path: inset(10% 0 85% 0);
+  }
+  10% {
+    clip-path: inset(0 0 0 0);
+  }
+  15% {
+    clip-path: inset(40% 0 50% 0);
+  }
+  20% {
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ======================================
+   ENHANCED BUTTON STYLES
+   ====================================== */
+
+/* All buttons get the spring effect */
+button:active {
+  animation: spring-press 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+}
+
+/* Start button special treatment */
+[data-start-button] {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-start-button]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: button-shine 2s ease-in-out infinite;
+}
+
+@keyframes button-shine {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
+
+/* Window control buttons rainbow on hover */
+.window-control-btn:hover {
+  animation: rainbow-shift 1s linear infinite, scale(1.1);
+  transform: scale(1.15);
+}
+
+/* ======================================
+   CHAOS MODE: EXTRA EFFECTS
+   ====================================== */
+
+/* Blinking "NEW!" badge style */
+.blink-fast {
+  animation: blink 0.5s linear infinite;
+}
+
+/* Screen shake on important actions */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 1px); }
+  20%, 40%, 60%, 80% { transform: translate(2px, -1px); }
+}
+
+.shake {
+  animation: screen-shake 0.5s ease-in-out;
+}
+
+/* Chromatic aberration effect */
+@keyframes chromatic-shift {
+  0% {
+    text-shadow: 2px 0 var(--y2k-cyan), -2px 0 var(--y2k-pink);
+  }
+  25% {
+    text-shadow: -2px 0 var(--y2k-cyan), 2px 0 var(--y2k-pink);
+  }
+  50% {
+    text-shadow: 2px 2px var(--y2k-cyan), -2px -2px var(--y2k-pink);
+  }
+  75% {
+    text-shadow: -2px 2px var(--y2k-cyan), 2px -2px var(--y2k-pink);
+  }
+  100% {
+    text-shadow: 2px 0 var(--y2k-cyan), -2px 0 var(--y2k-pink);
+  }
+}
+
+.chromatic {
+  animation: chromatic-shift 2s ease-in-out infinite;
+}
+
+/* Matrix rain inspired effect for background */
+@keyframes matrix-fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Neon text glow */
+.neon-text {
+  text-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 40px var(--y2k-pink),
+    0 0 80px var(--y2k-pink);
+}
+
+/* Electric border effect */
+@keyframes electric-border {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 10px var(--y2k-cyan),
+      0 0 10px var(--y2k-cyan),
+      0 0 20px var(--y2k-pink);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 20px var(--y2k-pink),
+      0 0 20px var(--y2k-pink),
+      0 0 40px var(--y2k-cyan);
+  }
+}
+
+.electric-border {
+  animation: electric-border 1s ease-in-out infinite;
+}
+
+/* Retro pixelated shadow */
+.pixel-shadow {
+  box-shadow:
+    4px 4px 0 var(--y2k-pink),
+    8px 8px 0 var(--y2k-cyan),
+    12px 12px 0 var(--y2k-lime);
+}
+
+/* ======================================
    VIEW TRANSITIONS API
    ====================================== */
 
@@ -23,51 +554,51 @@
   animation-duration: 0.3s;
 }
 
-/* Window appear animation - scale and translate from taskbar */
+/* Window appear animation - fly in from screen's bottom-left (Start button) */
 @keyframes window-appear {
   from {
     opacity: 0;
-    transform: scale(0.2) translateY(100vh);
+    transform: translate(calc(-50vw), calc(50vh)) scale(0.1);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate(0, 0) scale(1);
   }
 }
 
-/* Window disappear animation - scale and translate to taskbar */
+/* Window disappear animation - fly out to screen's bottom-left */
 @keyframes window-disappear {
   from {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate(0, 0) scale(1);
   }
   to {
     opacity: 0;
-    transform: scale(0.2) translateY(100vh);
+    transform: translate(calc(-50vw), calc(50vh)) scale(0.1);
   }
 }
 
-/* Window minimize animation - shrink and move to taskbar */
+/* Window minimize animation - shrink to screen's bottom-left */
 @keyframes window-minimize {
   from {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate(0, 0) scale(1);
   }
   to {
     opacity: 0;
-    transform: scale(0.2) translateY(100vh);
+    transform: translate(calc(-50vw), calc(50vh)) scale(0.1);
   }
 }
 
-/* Window restore animation - grow and move from taskbar */
+/* Window restore animation - grow from screen's bottom-left */
 @keyframes window-restore {
   from {
     opacity: 0;
-    transform: scale(0.2) translateY(100vh);
+    transform: translate(calc(-50vw), calc(50vh)) scale(0.1);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate(0, 0) scale(1);
   }
 }
 

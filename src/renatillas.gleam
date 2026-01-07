@@ -175,6 +175,8 @@ fn view(model: Model) -> element.Element(Msg) {
         ),
       ],
       [
+        // CRT noise overlay for full chaos mode
+        div([class("crt-noise")], []),
         clique.root(
           [
             class("w-full h-full absolute inset-0 clique-root"),
@@ -291,9 +293,9 @@ fn task_bar(model: Model) {
         ),
         ..get_minimized_windows(model.window_states)
       ]),
-      div([class("flex-1 text-center")], [
-        p([class("text-black text-xs font-bold")], [
-          text("BUILT WITH ♥ GLEAM"),
+      div([class("flex-1 text-center marquee-container overflow-hidden")], [
+        p([class("marquee text-black text-xs font-bold chromatic")], [
+          text("✦ BUILT WITH ♥ GLEAM ✦ Y2K FOREVER ✦ FUNCTIONAL PROGRAMMING IS THE FUTURE ✦ HELLO FROM THE PAST ✦ WELCOME TO MY DIGITAL SPACE ✦"),
         ]),
       ]),
       div(

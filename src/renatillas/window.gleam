@@ -96,16 +96,18 @@ fn create_window(config: WindowConfig(msg)) -> Element(msg) {
               ),
             ],
             [
-              div([class("flex items-center gap-2")], [
+              div([class("flex items-center gap-2 overflow-hidden")], [
                 div(
                   [
                     class(
-                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold",
+                      "w-4 h-4 bg-[#c0c0c0] border border-[#808080] flex items-center justify-center text-xs text-black font-bold flex-shrink-0",
                     ),
                   ],
                   [text(config.icon)],
                 ),
-                span([class("font-bold text-sm pr-10 ")], [text(config.title)]),
+                div([class("marquee-container overflow-hidden flex-1 pr-2")], [
+                  span([class("marquee font-bold text-sm whitespace-nowrap")], [text(config.title <> " ✦ " <> config.title <> " ✦ ")]),
+                ]),
               ]),
               create_window_controls(config.on_action, config.is_maximized),
             ],
@@ -171,14 +173,14 @@ pub fn email_content() -> Element(msg) {
   div(
     [
       class(
-        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1 electric-border",
       ),
     ],
     [
       img([
         src("email.gif"),
         alt("Email animation"),
-        class("w-24 h-24 pixelated"),
+        class("w-24 h-24 pixelated float"),
       ]),
     ],
   )
@@ -188,7 +190,7 @@ pub fn dancing_content() -> Element(msg) {
   div(
     [
       class(
-        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1 rainbow-glow",
       ),
     ],
     [
@@ -205,14 +207,14 @@ pub fn homer_content() -> Element(msg) {
   div(
     [
       class(
-        "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1",
+        "bg-[#c0c0c0] border border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-1 pulse-glow",
       ),
     ],
     [
       img([
         src("homer.gif"),
         alt("Homer Simpson"),
-        class("pixelated bg-white"),
+        class("pixelated bg-white float"),
       ]),
     ],
   )
@@ -222,14 +224,14 @@ pub fn skull_content() -> Element(msg) {
   div(
     [
       class(
-        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1",
+        "p-2 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-1 electric-border",
       ),
     ],
     [
       img([
         src("skull.gif"),
         alt("Skull animation"),
-        class("w-20 h-20 pixelated"),
+        class("w-20 h-20 pixelated float"),
       ]),
     ],
   )
@@ -243,37 +245,42 @@ pub fn header_content() -> Element(msg) {
       ),
     ],
     [
-      h1([class("text-4xl font-bold text-[#000080] mb-2")], [
+      // Main title with holographic rainbow effect
+      h1([class("text-4xl font-bold holographic mb-2 sparkle-container")], [
         text("RENATA AMUTIO"),
       ]),
-      p([class("text-lg text-black")], [
-        text("GLEAM DEVELOPER • FUNCTIONAL PROGRAMMING ENTHUSIAST"),
+      // Subtitle with marquee
+      div([class("marquee-container overflow-hidden")], [
+        p([class("marquee text-lg text-black chromatic")], [
+          text("✦ GLEAM DEVELOPER ✦ FUNCTIONAL PROGRAMMING ENTHUSIAST ✦ TYPE SAFETY ADVOCATE ✦ OPEN SOURCE CONTRIBUTOR ✦"),
+        ]),
       ]),
+      // Stats section with electric border
       div(
         [
           class(
-            "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040]",
+            "flex justify-center gap-8 mt-4 p-4 bg-[#c0c0c0] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] electric-border",
           ),
         ],
         [
-          div([class("text-center")], [
-            span([class("text-2xl font-bold text-[#0000ff] block")], [
+          div([class("text-center jelly")], [
+            span([class("text-2xl font-bold rainbow-text block neon-text")], [
               text("28+"),
             ]),
             span([class("text-xs text-black font-bold")], [
               text("LIBRARIES"),
             ]),
           ]),
-          div([class("text-center")], [
-            span([class("text-2xl font-bold text-[#0000ff] block")], [
+          div([class("text-center jelly")], [
+            span([class("text-2xl font-bold rainbow-text block neon-text")], [
               text("4"),
             ]),
             span([class("text-xs text-black font-bold")], [
               text("PROD SITES"),
             ]),
           ]),
-          div([class("text-center")], [
-            span([class("text-2xl font-bold text-[#0000ff] block")], [
+          div([class("text-center jelly")], [
+            span([class("text-2xl font-bold rainbow-text block neon-text")], [
               text("100%"),
             ]),
             span([class("text-xs text-black font-bold")], [
@@ -290,15 +297,18 @@ pub fn about_content() -> Element(msg) {
   div(
     [
       class(
-        "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start",
+        "p-4 bg-[#ffffff] border border-t-[#dfdfdf] border-l-[#dfdfdf] border-r-[#404040] border-b-[#404040] m-2 flex gap-4 items-start pixel-shadow",
       ),
     ],
     [
       div([class("flex-1")], [
         p([class("text-black leading-relaxed text-sm")], [
-          text(
-            "Welcome to my digital space! I'm a passionate Gleam developer who believes in the power of functional programming and type safety. When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love.",
-          ),
+          span([class("rainbow-text font-bold")], [text("Welcome to my digital space!")]),
+          text(" I'm a passionate Gleam developer who believes in the power of "),
+          span([class("holographic font-bold")], [text("functional programming")]),
+          text(" and "),
+          span([class("holographic font-bold")], [text("type safety")]),
+          text(". When I'm not crafting elegant Gleam libraries, you'll find me building production web applications that users actually love."),
         ]),
       ]),
     ],
@@ -313,7 +323,7 @@ pub fn libraries_content() -> Element(msg) {
       ),
     ],
     [
-      h3([class("text-lg font-bold text-[#000080] mb-3")], [
+      h3([class("text-lg font-bold holographic mb-3 sparkle-container")], [
         text("28+ Open Source Libraries"),
       ]),
       p([class("text-black leading-relaxed text-sm mb-3")], [
@@ -322,36 +332,36 @@ pub fn libraries_content() -> Element(msg) {
         ),
       ]),
       div([class("text-xs text-black mb-3 space-y-1")], [
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("tiramisu")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("tiramisu")]),
           text(" - Type-safe 3D game engine"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("eventsourcing")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("eventsourcing")]),
           text(" - Event-sourced systems"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("carotte")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("carotte")]),
           text(" - RabbitMQ client"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("franz")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("franz")]),
           text(" - Kafka integration"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("protozoa")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("protozoa")]),
           text(" - Protocol Buffers"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("clockwork")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("clockwork")]),
           text(" - Cron scheduling"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("g18n")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("g18n")]),
           text(" - Internationalization"),
         ]),
-        p([], [
-          span([class("font-bold text-[#000080]")], [text("vapour")]),
+        p([class("jelly")], [
+          span([class("font-bold rainbow-text")], [text("vapour")]),
           text(" - Steamworks SDK bindings"),
         ]),
       ]),
@@ -360,11 +370,11 @@ pub fn libraries_content() -> Element(msg) {
           href("https://github.com/renatillas"),
           target("_blank"),
           class(
-            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+            "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white rainbow-border",
           ),
           node.nodrag(),
         ],
-        [text("View All on Github")],
+        [text("View All on Github ✦")],
       ),
     ],
   )
@@ -379,8 +389,8 @@ pub fn sites_content() -> Element(msg) {
     ],
     [
       div([class("space-y-4")], [
-        div([], [
-          h3([class("text-lg font-bold text-[#000080] mb-2")], [
+        div([class("jelly")], [
+          h3([class("text-lg font-bold holographic mb-2")], [
             text("La Tienda de Helen"),
           ]),
           p([class("text-black text-sm mb-2")], [
@@ -391,15 +401,15 @@ pub fn sites_content() -> Element(msg) {
               href("https://latiendadehelen.com"),
               target("_blank"),
               class(
-                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white rainbow-border",
               ),
               node.nodrag(),
             ],
-            [text("Visit Site")],
+            [text("Visit Site ✦")],
           ),
         ]),
-        div([], [
-          h3([class("text-lg font-bold text-[#000080] mb-2")], [
+        div([class("jelly")], [
+          h3([class("text-lg font-bold holographic mb-2")], [
             text("Keitepinxa Studio"),
           ]),
           p([class("text-black text-sm mb-2")], [
@@ -410,15 +420,15 @@ pub fn sites_content() -> Element(msg) {
               href("https://keitepinxa.studio"),
               target("_blank"),
               class(
-                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white rainbow-border",
               ),
               node.nodrag(),
             ],
-            [text("Visit Site")],
+            [text("Visit Site ✦")],
           ),
         ]),
-        div([], [
-          h3([class("text-lg font-bold text-[#000080] mb-2")], [
+        div([class("jelly")], [
+          h3([class("text-lg font-bold holographic mb-2")], [
             text("Santomot"),
           ]),
           p([class("text-black text-sm mb-2")], [
@@ -429,15 +439,15 @@ pub fn sites_content() -> Element(msg) {
               href("https://santomot.com"),
               target("_blank"),
               class(
-                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white rainbow-border",
               ),
               node.nodrag(),
             ],
-            [text("Visit Site")],
+            [text("Visit Site ✦")],
           ),
         ]),
-        div([], [
-          h3([class("text-lg font-bold text-[#000080] mb-2")], [
+        div([class("jelly")], [
+          h3([class("text-lg font-bold holographic mb-2")], [
             text("Mikaela Abril"),
           ]),
           p([class("text-black text-sm mb-2")], [
@@ -448,11 +458,11 @@ pub fn sites_content() -> Element(msg) {
               href("https://mikaelaabrildz.github.io"),
               target("_blank"),
               class(
-                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white",
+                "bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-black text-xs font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white rainbow-border",
               ),
               node.nodrag(),
             ],
-            [text("Visit Site")],
+            [text("Visit Site ✦")],
           ),
         ]),
       ]),
